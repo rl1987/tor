@@ -4548,7 +4548,7 @@ client_check_address_changed(tor_socket_t sock)
 
   if (! *last_interface_ip_ptr) {
     tor_addr_t *a = tor_malloc_zero(sizeof(tor_addr_t));
-    if (get_interface_address6(LOG_INFO, family, a)==0) {
+    if (get_interface_address6(LOG_INFO, family, a, 0)==0) {
       *last_interface_ip_ptr = a;
     } else {
       tor_free(a);
@@ -4563,7 +4563,7 @@ client_check_address_changed(tor_socket_t sock)
 
   /* Uh-oh.  We haven't connected from this address before. Has the interface
    * address changed? */
-  if (get_interface_address6(LOG_INFO, family, &iface_addr)<0)
+  if (get_interface_address6(LOG_INFO, family, &iface_addr, 0)<0)
     return;
 
   if (tor_addr_eq(&iface_addr, *last_interface_ip_ptr)) {
