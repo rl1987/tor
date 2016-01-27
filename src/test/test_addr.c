@@ -728,8 +728,8 @@ test_addr_ip6_helpers(void *arg)
   tt_assert(sizeof(tor_addr_t) >= sizeof(struct in6_addr));
 
   /* get interface addresses */
-  r = get_interface_address6(LOG_DEBUG, AF_INET, &t1);
-  i = get_interface_address6(LOG_DEBUG, AF_INET6, &t2);
+  r = get_interface_address6(LOG_DEBUG, AF_INET, &t1, 0);
+  i = get_interface_address6(LOG_DEBUG, AF_INET6, &t2, 0);
 
   TT_BLATHER(("v4 address: %s (family=%d)", fmt_addr(&t1),
               tor_addr_family(&t1)));

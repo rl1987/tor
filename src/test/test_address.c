@@ -281,7 +281,7 @@ test_address_get_if_addrs_ifaddrs(void *arg)
 
   (void)arg;
 
-  results = get_interface_addresses_ifaddrs(LOG_ERR, AF_UNSPEC);
+  results = get_interface_addresses_ifaddrs(LOG_ERR, AF_UNSPEC, 0);
 
   tt_assert(results);
   /* Some FreeBSD jails don't have localhost IP address. Instead, they only
@@ -511,7 +511,7 @@ test_address_get_if_addrs_ioctl(void *arg)
 
   (void)arg;
 
-  result = get_interface_addresses_ioctl(LOG_ERR, AF_INET);
+  result = get_interface_addresses_ioctl(LOG_ERR, AF_INET, 0);
 
   /* On an IPv6-only system, this will fail and return NULL
   tt_assert(result);
@@ -620,7 +620,7 @@ test_address_udp_socket_trick_whitebox(void *arg)
 
   hack_retval =
   get_interface_address6_via_udp_socket_hack(LOG_DEBUG,
-                                             AF_INET, addr_from_hack);
+                                             AF_INET, addr_from_hack, 0);
 
   tt_int_op(hack_retval,==,0);
   tt_assert(tor_addr_eq_ipv4h(addr_from_hack, 0x1720f676));
@@ -635,7 +635,7 @@ test_address_udp_socket_trick_whitebox(void *arg)
 
   hack_retval =
   get_interface_address6_via_udp_socket_hack(LOG_DEBUG,
-                                             AF_INET6, addr_from_hack);
+                                             AF_INET6, addr_from_hack, 0);
 
   tt_int_op(hack_retval,==,0);
 
@@ -679,7 +679,7 @@ test_address_udp_socket_trick_blackbox(void *arg)
   retval_reference = get_interface_address6(LOG_DEBUG,AF_INET,&addr4);
   retval = get_interface_address6_via_udp_socket_hack(LOG_DEBUG,
                                                       AF_INET,
-                                                      &addr4_to_check);
+                                                      &addr4_to_check. 0);
 
   tt_int_op(retval,==,retval_reference);
   tt_assert( (retval == -1 && retval_reference == -1) ||
@@ -688,7 +688,7 @@ test_address_udp_socket_trick_blackbox(void *arg)
   retval_reference = get_interface_address6(LOG_DEBUG,AF_INET6,&addr6);
   retval = get_interface_address6_via_udp_socket_hack(LOG_DEBUG,
                                                       AF_INET6,
-                                                      &addr6_to_check);
+                                                      &addr6_to_check, 0);
 
   tt_int_op(retval,==,retval_reference);
   tt_assert( (retval == -1 && retval_reference == -1) ||
@@ -716,7 +716,8 @@ test_address_udp_socket_trick_blackbox(void *arg)
    */
 
   retval = get_interface_address6_via_udp_socket_hack(LOG_DEBUG,
-                                                      AF_INET+AF_INET6,&addr4);
+                                                      AF_INET+AF_INET6,
+                                                      &addr4, 0);
 
   tt_assert(retval == -1);
 
@@ -845,10 +846,12 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
 static int called_get_interface_addresses_raw = 0;
 
 static smartlist_t *
-mock_get_interface_addresses_raw_fail(int severity, sa_family_t family)
+mock_get_interface_addresses_raw_fail(int severity, sa_family_t family,
+                                      int loopback)
 {
   (void)severity;
   (void)family;
+  (void)loopback;
 
   called_get_interface_addresses_raw++;
   return smartlist_new();
@@ -859,11 +862,13 @@ static int called_get_interface_address6_via_udp_socket_hack = 0;
 static int
 mock_get_interface_address6_via_udp_socket_hack_fail(int severity,
                                                      sa_family_t family,
-                                                     tor_addr_t *addr)
+                                                     tor_addr_t *addr,
+                                                     int loopback)
 {
   (void)severity;
   (void)family;
   (void)addr;
+  (void)loopback;
 
   called_get_interface_address6_via_udp_socket_hack++;
   return -1;
@@ -894,10 +899,10 @@ test_address_get_if_addrs_internal_fail(void *arg)
   tt_assert(results2 != NULL);
   tt_int_op(smartlist_len(results2),==,0);
 
-  rv = get_interface_address6(LOG_ERR, AF_INET6, &ipv6_addr);
+  rv = get_interface_address6(LOG_ERR, AF_INET6, &ipv6_addr, 0);
   tt_assert(rv == -1);
 
-  rv = get_interface_address(LOG_ERR, &ipv4h_addr);
+  rv = get_interface_address(LOG_ERR, &ipv4h_addr, 0);
   tt_assert(rv == -1);
 
  done:
@@ -945,7 +950,7 @@ test_address_get_if_addrs(void *arg)
 
   (void)arg;
 
-  rv = get_interface_address(LOG_ERR, &addr_h);
+  rv = get_interface_address(LOG_ERR, &addr_h, 0);
 
   /* When the network is down, a system might not have any non-local
    * non-multicast IPv4 addresses, not even internal ones.
@@ -972,7 +977,7 @@ test_address_get_if_addrs6(void *arg)
 
   (void)arg;
 
-  rv = get_interface_address6(LOG_ERR, AF_INET6, &tor_addr);
+  rv = get_interface_address6(LOG_ERR, AF_INET6, &tor_addr, 0);
 
   /* Work even on systems without IPv6 interfaces */
   if (rv == 0) {

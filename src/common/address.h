@@ -192,7 +192,7 @@ const char *fmt_addrport(const tor_addr_t *addr, uint16_t port);
 const char * fmt_addr32(uint32_t addr);
 
 MOCK_DECL(int,get_interface_address6,(int severity, sa_family_t family,
-tor_addr_t *addr));
+tor_addr_t *addr, int loopback));
 void free_interface_address6_list(smartlist_t * addrs);
 MOCK_DECL(smartlist_t *,get_interface_address6_list,(int severity,
                                                      sa_family_t family,
@@ -286,7 +286,8 @@ int addr_mask_get_bits(uint32_t mask);
 #define INET_NTOA_BUF_LEN 16
 int tor_inet_ntoa(const struct in_addr *in, char *buf, size_t buf_len);
 char *tor_dup_ip(uint32_t addr) ATTR_MALLOC;
-MOCK_DECL(int,get_interface_address,(int severity, uint32_t *addr));
+MOCK_DECL(int,get_interface_address,(int severity, uint32_t *addr,
+                                     int loopback));
 /** Free a smartlist of IP addresses returned by get_interface_address_list.
  */
 static inline void
@@ -312,30 +313,35 @@ tor_addr_port_t *tor_addr_port_new(const tor_addr_t *addr, uint16_t port);
 
 #ifdef ADDRESS_PRIVATE
 MOCK_DECL(smartlist_t *,get_interface_addresses_raw,(int severity,
-                                                     sa_family_t family));
+                                                     sa_family_t family,
+                                                     int loopback));
 MOCK_DECL(int,get_interface_address6_via_udp_socket_hack,(int severity,
                                                           sa_family_t family,
-                                                          tor_addr_t *addr));
+                                                          tor_addr_t *addr,
+                                                          int loopback));
 
 #ifdef HAVE_IFADDRS_TO_SMARTLIST
 STATIC smartlist_t *ifaddrs_to_smartlist(const struct ifaddrs *ifa,
                                          sa_family_t family);
 STATIC smartlist_t *get_interface_addresses_ifaddrs(int severity,
-                                                    sa_family_t family);
+                                                    sa_family_t family,
+                                                    int loopback);
 #endif
 
 #ifdef HAVE_IP_ADAPTER_TO_SMARTLIST
 STATIC smartlist_t *ip_adapter_addresses_to_smartlist(
                                         const IP_ADAPTER_ADDRESSES *addresses);
 STATIC smartlist_t *get_interface_addresses_win32(int severity,
-                                                  sa_family_t family);
+                                                  sa_family_t family,
+                                                  int loopback);
 #endif
 
 #ifdef HAVE_IFCONF_TO_SMARTLIST
 STATIC smartlist_t *ifreq_to_smartlist(char *ifr,
                                        size_t buflen);
 STATIC smartlist_t *get_interface_addresses_ioctl(int severity,
-                                                  sa_family_t family);
+                                                  sa_family_t family,
+                                                  int loopback);
 #endif
 
 #endif // ADDRESS_PRIVATE
