@@ -1274,7 +1274,8 @@ typedef ULONG (WINAPI *GetAdaptersAddresses_fn_t)(
  * into smartlist of <b>tor_addr_t</b> structures.
  */
 STATIC smartlist_t *
-ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family)
+ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family, 
+                     int loopback)
 {
   smartlist_t *result = smartlist_new();
   const struct ifaddrs *i;
@@ -1292,6 +1293,8 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family)
       continue;
     if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
       continue;
+    if (loopback && !tor_addr_is_loopback(&tmp))
+      continue;
     smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
   }
 
@@ -1304,7 +1307,7 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family)
  */
 STATIC smartlist_t *
 get_interface_addresses_ifaddrs(int severity, sa_family_t family,
-                                int localhost)
+                                int loopback)
 {
 
   /* Most free Unixy systems provide getifaddrs, which gives us a linked list
@@ -1317,7 +1320,7 @@ get_interface_addresses_ifaddrs(int severity, sa_family_t family,
     return NULL;
   }
 
-  result = ifaddrs_to_smartlist(ifa, family);
+  result = ifaddrs_to_smartlist(ifa, family, loopback);
 
   freeifaddrs(ifa);
 
@@ -1332,7 +1335,8 @@ get_interface_addresses_ifaddrs(int severity, sa_family_t family,
  */
 
 STATIC smartlist_t *
-ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses)
+ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
+                                  int loopback)
 {
   smartlist_t *result = smartlist_new();
   const IP_ADAPTER_ADDRESSES *address;
@@ -1346,6 +1350,8 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses)
       if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
         continue;
       if (tor_addr_from_sockaddr(&tmp, sa, NULL) < 0)
+        continue;
+      if (loopback && !tor_addr_is_loopback(&tmp))
         continue;
       smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
     }
@@ -1406,7 +1412,7 @@ get_interface_addresses_win32(int severity, sa_family_t family,
     goto done;
   }
 
-  result = ip_adapter_addresses_to_smartlist(addresses);
+  result = ip_adapter_addresses_to_smartlist(addresses, loopback);
 
  done:
   if (lib)
@@ -1432,7 +1438,7 @@ get_interface_addresses_win32(int severity, sa_family_t family,
  * into smartlist of <b>tor_addr_t</b> structures.
  */
 STATIC smartlist_t *
-ifreq_to_smartlist(char *buf, size_t buflen)
+ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
 {
   smartlist_t *result = smartlist_new();
   char *end = buf + buflen;
@@ -1453,8 +1459,10 @@ ifreq_to_smartlist(char *buf, size_t buflen)
 
     int conversion_success = (tor_addr_from_sockaddr(&tmp, sa, NULL) == 0);
 
-    if (valid_sa_family && conversion_success)
-      smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
+    if (valid_sa_family && conversion_success) {
+      if (!loopback || tor_addr_is_loopback(&tmp))
+        smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
+    }
 
     buf += _SIZEOF_ADDR_IFREQ(*r);
   }
@@ -1469,7 +1477,7 @@ ifreq_to_smartlist(char *buf, size_t buflen)
  */
 STATIC smartlist_t *
 get_interface_addresses_ioctl(int severity, sa_family_t family,
-                              int localhost)
+                              int loopback)
 {
   /* Some older unixy systems make us use ioctl(SIOCGIFCONF) */
   struct ifconf ifc;
@@ -1510,7 +1518,7 @@ get_interface_addresses_ioctl(int severity, sa_family_t family,
     /* Ensure we have least IFREQ_SIZE bytes unused at the end. Otherwise, we
      * don't know if we got everything during ioctl. */
   } while (mult * IFREQ_SIZE - ifc.ifc_len <= IFREQ_SIZE);
-  result = ifreq_to_smartlist(ifc.ifc_buf, ifc.ifc_len);
+  result = ifreq_to_smartlist(ifc.ifc_buf, ifc.ifc_len, loopback);
 
  done:
   if (fd >= 0)
