@@ -1385,10 +1385,11 @@ typedef ULONG (WINAPI *GetAdaptersAddresses_fn_t)(
 #ifdef HAVE_IFADDRS_TO_SMARTLIST
 /*
  * Convert a linked list consisting of <b>ifaddrs</b> structures
- * into smartlist of <b>tor_addr_t</b> structures.
+ * into smartlist of <b>tor_addr_t</b> structures. Skip non-loopback
+ * addresses if <b>loopback</b> is true.
  */
 STATIC smartlist_t *
-ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family, 
+ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
                      int loopback)
 {
   smartlist_t *result = smartlist_new();
@@ -1417,7 +1418,8 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
 
 /** Use getiffaddrs() function to get list of current machine
  * network interface addresses. Represent the result by smartlist of
- * <b>tor_addr_t</b> structures.
+ * <b>tor_addr_t</b> structures. Skip non-loopback addresses if
+ * <b>loopback</b> is true.
  */
 STATIC smartlist_t *
 get_interface_addresses_ifaddrs(int severity, sa_family_t family,
@@ -1445,9 +1447,9 @@ get_interface_addresses_ifaddrs(int severity, sa_family_t family,
 #ifdef HAVE_IP_ADAPTER_TO_SMARTLIST
 
 /** Convert a Windows-specific <b>addresses</b> linked list into smartlist
- * of <b>tor_addr_t</b> structures.
+ * of <b>tor_addr_t</b> structures. Skip non-loopback addresses if
+ * <b>loopback</b> is true.
  */
-
 STATIC smartlist_t *
 ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
                                   int loopback)
@@ -1561,7 +1563,8 @@ ifconf_free_ifc_buf(struct ifconf *ifc)
 }
 
 /** Convert <b>*buf</b>, an ifreq structure array of size <b>buflen</b>,
- * into smartlist of <b>tor_addr_t</b> structures.
+ * into smartlist of <b>tor_addr_t</b> structures. Skip non-loopback
+ * addresses if <b>loopback</b> is true.
  */
 STATIC smartlist_t *
 ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
@@ -1599,7 +1602,8 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
 
 /** Use ioctl(.,SIOCGIFCONF,.) to get a list of current machine
  * network interface addresses. Represent the result by smartlist of
- * <b>tor_addr_t</b> structures.
+ * <b>tor_addr_t</b> structures. Skip non-loopback addresses if
+ * <b>loopback</b> is true.
  */
 STATIC smartlist_t *
 get_interface_addresses_ioctl(int severity, sa_family_t family,
@@ -1659,7 +1663,8 @@ get_interface_addresses_ioctl(int severity, sa_family_t family,
  * (An empty smartlist indicates that we successfully learned that we have no
  * addresses.)  Log failure messages at <b>severity</b>. Only return the
  * interface addresses of requested <b>family</b> and ignore the addresses
- * of other address families. */
+ * of other address families. If <b>loopback</b> is true, retrieve
+ * only loopback interface addresses. */
 MOCK_IMPL(smartlist_t *,
 get_interface_addresses_raw,(int severity, sa_family_t family,
                              int loopback))
@@ -1702,7 +1707,8 @@ tor_addr_is_multicast(const tor_addr_t *a)
 /** Attempt to retrieve IP address of current host by utilizing some
  * UDP socket trickery. Only look for address of given <b>family</b>
  * (only AF_INET and AF_INET6 are supported). Set result to *<b>addr</b>.
- * Return 0 on success, -1 on failure.
+ * Return 0 on success, -1 on failure. Try to retrieve loopback interface
+ * address if <b>loopback</b> is true.
  */
 MOCK_IMPL(int,
 get_interface_address6_via_udp_socket_hack,(int severity,
@@ -1788,10 +1794,13 @@ get_interface_address6_via_udp_socket_hack,(int severity,
  * address has changed, as it may be an internal IP address.  Return 0 on
  * success, -1 on failure.
  * Prefer get_interface_address6_list for a list of all addresses on all
- * interfaces which connect to the Internet.
+ * interfaces which connect to the Internet. If <b>loopback</b> is true,
+ * find the address of a loopback interface.
  */
 MOCK_IMPL(int,
-get_interface_address6,(int severity, sa_family_t family, tor_addr_t *addr,                        int loopback))
+get_interface_address6,(int severity, sa_family_t family, 
+                        tor_addr_t *addr,
+                        int loopback))
 {
   smartlist_t *addrs;
   int rv = -1;
@@ -2144,7 +2153,9 @@ tor_dup_ip(uint32_t addr)
  * whether our address has changed, as it may be an internal IPv4 address.
  * Return 0 on success, -1 on failure.
  * Prefer get_interface_address_list6 for a list of all IPv4 and IPv6
- * addresses on all interfaces which connect to the Internet.
+ * addresses on all interfaces which connect to the Internet. Set
+ * <b>addr</b> to address of loopback interface if <b>loopback</b>
+ * is true.
  */
 MOCK_IMPL(int,
 get_interface_address,(int severity, uint32_t *addr, int loopback))
