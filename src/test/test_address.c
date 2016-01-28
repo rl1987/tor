@@ -221,7 +221,7 @@ test_address_ifaddrs_to_smartlist(void *arg)
    ifa_ipv6->ifa_dstaddr = NULL;
    ifa_ipv6->ifa_data = NULL;
 
-   smartlist = ifaddrs_to_smartlist(ifa, AF_UNSPEC);
+   smartlist = ifaddrs_to_smartlist(ifa, AF_UNSPEC, 0);
 
    tt_assert(smartlist);
    tt_int_op(smartlist_len(smartlist), OP_EQ, 3);
@@ -317,7 +317,7 @@ test_address_get_if_addrs_win32(void *arg)
 
   (void)arg;
 
-  results = get_interface_addresses_win32(LOG_ERR, AF_UNSPEC);
+  results = get_interface_addresses_win32(LOG_ERR, AF_UNSPEC, 0);
 
   tt_int_op(smartlist_len(results),OP_GE,1);
   tt_assert(smartlist_contains_localhost_tor_addr(results));
@@ -381,7 +381,7 @@ test_address_ip_adapter_addresses_to_smartlist(void *arg)
   sockaddr_localhost = sockaddr_in_from_string("127.0.0.1", NULL);
   unicast21->Address.lpSockaddr = (LPSOCKADDR)sockaddr_localhost;
 
-  result = ip_adapter_addresses_to_smartlist(addrs1);
+  result = ip_adapter_addresses_to_smartlist(addrs1, 0);
 
   tt_assert(result);
   tt_int_op(smartlist_len(result), OP_EQ, 3);
@@ -455,8 +455,8 @@ test_address_ifreq_to_smartlist(void *arg)
   ifc->ifc_len = sizeof(struct ifreq);
   ifc->ifc_ifcu.ifcu_req = ifr;
 
-  results = ifreq_to_smartlist(ifc->ifc_buf,ifc->ifc_len);
-  tt_int_op(smartlist_len(results),OP_EQ,1);
+  results = ifreq_to_smartlist(ifc->ifc_buf,ifc->ifc_len,0);
+  tt_int_op(smartlist_len(results),==,1);
 
   tor_addr = smartlist_get(results, 0);
   addr_len =
@@ -478,8 +478,8 @@ test_address_ifreq_to_smartlist(void *arg)
   SMARTLIST_FOREACH(results, tor_addr_t *, t, tor_free(t));
   smartlist_free(results);
 
-  results = ifreq_to_smartlist(ifc->ifc_buf,ifc->ifc_len);
-  tt_int_op(smartlist_len(results),OP_EQ,2);
+  results = ifreq_to_smartlist(ifc->ifc_buf,ifc->ifc_len,0);
+  tt_int_op(smartlist_len(results),==,2);
 
   tor_addr = smartlist_get(results, 0);
   addr_len =

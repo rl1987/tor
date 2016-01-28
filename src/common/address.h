@@ -368,7 +368,8 @@ MOCK_DECL(int,get_interface_address6_via_udp_socket_hack,(int severity,
 
 #ifdef HAVE_IFADDRS_TO_SMARTLIST
 STATIC smartlist_t *ifaddrs_to_smartlist(const struct ifaddrs *ifa,
-                                         sa_family_t family);
+                                         sa_family_t family,
+                                         int loopback);
 STATIC smartlist_t *get_interface_addresses_ifaddrs(int severity,
                                                     sa_family_t family,
                                                     int loopback);
@@ -376,7 +377,8 @@ STATIC smartlist_t *get_interface_addresses_ifaddrs(int severity,
 
 #ifdef HAVE_IP_ADAPTER_TO_SMARTLIST
 STATIC smartlist_t *ip_adapter_addresses_to_smartlist(
-                                        const IP_ADAPTER_ADDRESSES *addresses);
+                                        const IP_ADAPTER_ADDRESSES *addresses,
+                                        int loopback);
 STATIC smartlist_t *get_interface_addresses_win32(int severity,
                                                   sa_family_t family,
                                                   int loopback);
@@ -384,7 +386,8 @@ STATIC smartlist_t *get_interface_addresses_win32(int severity,
 
 #ifdef HAVE_IFCONF_TO_SMARTLIST
 STATIC smartlist_t *ifreq_to_smartlist(char *ifr,
-                                       size_t buflen);
+                                       size_t buflen,
+                                       int loopback);
 STATIC smartlist_t *get_interface_addresses_ioctl(int severity,
                                                   sa_family_t family,
                                                   int loopback);
