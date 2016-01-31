@@ -1653,7 +1653,8 @@ get_interface_address6_via_udp_socket_hack,(int severity,
       log_fn(severity, LD_NET, "Tried to perform an UDP socket trick to "
                                "get loopback interface address, but "
                                "got non-loopback address instead. Your "
-                               "DNS setup might be questionable.");
+                               "loopback configuration might not be "
+                               "standard.");
     } else {
       r=0;
     }
