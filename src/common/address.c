@@ -1814,7 +1814,7 @@ get_interface_address6,(int severity, sa_family_t family,
   memset(addr, 0, sizeof(tor_addr_t));
 
   /* Get a list of public or internal IPs in arbitrary order */
-  addrs = get_interface_address6_list(severity, family, 1);
+  addrs = get_interface_address6_list(severity, family, loopback);
 
   /* Find the first non-internal address, or the last internal address
    * Ideally, we want the default route, see #12377 for details */
@@ -1822,6 +1822,10 @@ get_interface_address6,(int severity, sa_family_t family,
     tor_addr_copy(addr, a);
     rv = 0;
 
+    /* Declare success if we were looking for loopback address and
+     * found one. */
+    if (loopback && tor_addr_is_loopback(a))
+      break;
     /* If we found a non-internal address, declare success.  Otherwise,
      * keep looking. */
     if (!tor_addr_is_internal(a, 0))
