@@ -744,7 +744,7 @@ test_address_get_if_addrs_list_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 1);
+  results = get_interface_address_list(LOG_ERR, 1, 0);
 
   tt_ptr_op(results, OP_NE, NULL);
   /* When the network is down, a system might not have any non-local
@@ -775,7 +775,7 @@ test_address_get_if_addrs_list_no_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 0);
+  results = get_interface_address_list(LOG_ERR, 0, 0);
 
   tt_ptr_op(results, OP_NE, NULL);
   /* Work even on systems with only internal IPv4 addresses */
@@ -806,7 +806,7 @@ test_address_get_if_addrs6_list_internal(void *arg)
 
   /* We might drop a log_err */
   setup_full_capture_of_logs(LOG_ERR);
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
   tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
   if (smartlist_len(mock_saved_logs()) == 1) {
     expect_log_msg_containing_either4("connect() failed",
@@ -849,7 +849,7 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
 
   /* We might drop a log_err */
   setup_full_capture_of_logs(LOG_ERR);
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
   tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
   if (smartlist_len(mock_saved_logs()) == 1) {
     expect_log_msg_containing_either4("connect() failed",
@@ -931,7 +931,7 @@ test_address_get_if_addrs_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
   tt_ptr_op(results1, OP_NE, NULL);
   tt_int_op(smartlist_len(results1),OP_EQ,0);
 
@@ -968,7 +968,7 @@ test_address_get_if_addrs_no_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
   tt_ptr_op(results1, OP_NE, NULL);
   tt_int_op(smartlist_len(results1),OP_EQ,0);
 
