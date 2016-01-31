@@ -1689,7 +1689,7 @@ get_interface_address6,(int severity, sa_family_t family,
   memset(addr, 0, sizeof(tor_addr_t));
 
   /* Get a list of public or internal IPs in arbitrary order */
-  addrs = get_interface_address6_list(severity, family, loopback);
+  addrs = get_interface_address6_list(severity, family, 1, loopback);
 
   /* Find the first non-internal address, or the last internal address
    * Ideally, we want the default route, see #12377 for details */
@@ -1733,16 +1733,17 @@ free_interface_address6_list(smartlist_t *addrs)
  */
 MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
                                                      sa_family_t family,
-                                                     int include_internal))
+                                                     int include_internal,
+                                                     int loopback))
 {
   smartlist_t *addrs;
   tor_addr_t addr;
 
   /* Try to do this the smart way if possible. */
-  if ((addrs = get_interface_addresses_raw(severity, family, 0))) {
+  if ((addrs = get_interface_addresses_raw(severity, family, loopback))) {
     SMARTLIST_FOREACH_BEGIN(addrs, tor_addr_t *, a)
     {
-      if (tor_addr_is_loopback(a) ||
+      if ((!loopback && tor_addr_is_loopback(a)) ||
           tor_addr_is_multicast(a)) {
         SMARTLIST_DEL_CURRENT(addrs, a);
         tor_free(a);
@@ -1770,8 +1771,8 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
   addrs = smartlist_new();
 
   if (family == AF_INET || family == AF_UNSPEC) {
-    if (get_interface_address6_via_udp_socket_hack(severity,AF_INET,
-                                                   &addr, 0) == 0) {
+    if (get_interface_address6_via_udp_socket_hack(severity, AF_INET,
+                                                   &addr, loopback) == 0) {
       if (include_internal || !tor_addr_is_internal(&addr, 0)) {
         smartlist_add(addrs, tor_dup_addr(&addr));
       }
@@ -1779,8 +1780,8 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
   }
 
   if (family == AF_INET6 || family == AF_UNSPEC) {
-    if (get_interface_address6_via_udp_socket_hack(severity,AF_INET6,
-                                                   &addr, 0) == 0) {
+    if (get_interface_address6_via_udp_socket_hack(severity, AF_INET6,
+                                                   &addr, loopback) == 0) {
       if (include_internal || !tor_addr_is_internal(&addr, 0)) {
         smartlist_add(addrs, tor_dup_addr(&addr));
       }

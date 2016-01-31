@@ -732,7 +732,7 @@ test_address_get_if_addrs_list_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 1);
+  results = get_interface_address_list(LOG_ERR, 1, 0);
 
   tt_assert(results != NULL);
   /* When the network is down, a system might not have any non-local
@@ -763,7 +763,7 @@ test_address_get_if_addrs_list_no_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 0);
+  results = get_interface_address_list(LOG_ERR, 0, 0);
 
   tt_assert(results != NULL);
   /* Work even on systems with only internal IPv4 addresses */
@@ -792,7 +792,7 @@ test_address_get_if_addrs6_list_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
 
   tt_assert(results != NULL);
   /* Work even on systems without IPv6 interfaces */
@@ -821,7 +821,7 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
 
   tt_assert(results != NULL);
   /* Work even on systems without IPv6 interfaces */
@@ -891,11 +891,11 @@ test_address_get_if_addrs_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
   tt_assert(results1 != NULL);
   tt_int_op(smartlist_len(results1),==,0);
 
-  results2 = get_interface_address_list(LOG_ERR, 1);
+  results2 = get_interface_address_list(LOG_ERR, 1, 0);
   tt_assert(results2 != NULL);
   tt_int_op(smartlist_len(results2),==,0);
 
@@ -925,11 +925,11 @@ test_address_get_if_addrs_no_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
   tt_assert(results1 != NULL);
   tt_int_op(smartlist_len(results1),==,0);
 
-  results2 = get_interface_address_list(LOG_ERR, 0);
+  results2 = get_interface_address_list(LOG_ERR, 0, 0);
   tt_assert(results2 != NULL);
   tt_int_op(smartlist_len(results2),==,0);
 
