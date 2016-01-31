@@ -1732,7 +1732,10 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     sock = tor_open_socket(PF_INET6,SOCK_DGRAM,IPPROTO_UDP);
     addr_len = (socklen_t)sizeof(struct sockaddr_in6);
     sin6->sin6_family = AF_INET6;
-    S6_ADDR16(sin6->sin6_addr)[0] = htons(0x2002); /* 2002:: */
+    if (loopback)
+      S6_ADDR16(sin6->sin6_addr)[3] = htons(0x1); /* ::1 */
+    else
+      S6_ADDR16(sin6->sin6_addr)[0] = htons(0x2002); /* 2002:: */
   } else if (family == AF_INET) {
     struct sockaddr_in *sin = (struct sockaddr_in*)&target_addr;
     /* Use the "discard" service port */
@@ -1740,7 +1743,9 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     sock = tor_open_socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
     addr_len = (socklen_t)sizeof(struct sockaddr_in);
     sin->sin_family = AF_INET;
-    sin->sin_addr.s_addr = htonl(0x12000001); /* 18.0.0.1 */
+    sin->sin_addr.s_addr = 
+    loopback ? htonl(0x7f000001) : htonl(0x12000001); 
+                  /* 127.0.0.1      18.0.0.1 */
   } else {
     return -1;
   }
