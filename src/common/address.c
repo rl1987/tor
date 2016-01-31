@@ -1482,7 +1482,7 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
  */
 STATIC smartlist_t *
 get_interface_addresses_win32(int severity, sa_family_t family,
-                              int localhost)
+                              int loopback)
 {
 
   /* Windows XP began to provide GetAdaptersAddresses. Windows 2000 had a
