@@ -1605,7 +1605,10 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     sock = tor_open_socket(PF_INET6,SOCK_DGRAM,IPPROTO_UDP);
     addr_len = (socklen_t)sizeof(struct sockaddr_in6);
     sin6->sin6_family = AF_INET6;
-    S6_ADDR16(sin6->sin6_addr)[0] = htons(0x2002); /* 2002:: */
+    if (loopback)
+      S6_ADDR16(sin6->sin6_addr)[3] = htons(0x1); /* ::1 */
+    else
+      S6_ADDR16(sin6->sin6_addr)[0] = htons(0x2002); /* 2002:: */
   } else if (family == AF_INET) {
     struct sockaddr_in *sin = (struct sockaddr_in*)&target_addr;
     /* Use the "discard" service port */
@@ -1613,7 +1616,9 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     sock = tor_open_socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
     addr_len = (socklen_t)sizeof(struct sockaddr_in);
     sin->sin_family = AF_INET;
-    sin->sin_addr.s_addr = htonl(0x12000001); /* 18.0.0.1 */
+    sin->sin_addr.s_addr = 
+    loopback ? htonl(0x7f000001) : htonl(0x12000001); 
+                  /* 127.0.0.1      18.0.0.1 */
   } else {
     return -1;
   }
@@ -1640,9 +1645,15 @@ get_interface_address6_via_udp_socket_hack,(int severity,
   }
 
  if (tor_addr_from_sockaddr(addr, (struct sockaddr*)&my_addr, NULL) == 0) {
-    if (tor_addr_is_loopback(addr) || tor_addr_is_multicast(addr)) {
+    if ((!loopback && tor_addr_is_loopback(addr)) 
+        || tor_addr_is_multicast(addr)) {
       log_fn(severity, LD_NET, "Address that we determined via UDP socket"
                                " magic is unsuitable for public comms.");
+    } else if (loopback && !tor_addr_is_loopback(addr)) {
+      log_fn(severity, LD_NET, "Tried to perform an UDP socket trick to "
+                               "get loopback interface address, but "
+                               "got non-loopback address instead. Your "
+                               "DNS setup might be questionable.");
     } else {
       r=0;
     }
