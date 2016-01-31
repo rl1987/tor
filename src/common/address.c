@@ -1771,8 +1771,8 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     goto err;
   }
 
-  if ((!loopback && tor_addr_is_loopback(addr)) ||
-    tor_addr_is_multicast(addr)) {
+  if ((!loopback && tor_addr_is_loopback(addr)) 
+      || tor_addr_is_multicast(addr)) {
     log_fn(severity, LD_NET, "Address that we determined via UDP socket"
                              " magic is unsuitable for public comms.");
   } else if (loopback && !tor_addr_is_loopback(addr)) {
@@ -1784,6 +1784,7 @@ get_interface_address6_via_udp_socket_hack,(int severity,
   } else {
     r=0;
   }
+ }
 
  err:
   if (sock >= 0)
