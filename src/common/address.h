@@ -298,7 +298,7 @@ free_interface_address_list(smartlist_t *addrs)
 }
 /** Return a smartlist of the IPv4 addresses of all interfaces on the server.
  * Excludes loopback (unless <b>loopback</b> is true) and multicast addresses.
- * Only includes internal addresses if include_internal is true. 
+ * Only includes internal addresses if include_internal is true.
  * (Note that a relay behind NAT may use an
  * internal address to connect to the Internet.)
  * An empty smartlist means that there are no IPv4 addresses.
