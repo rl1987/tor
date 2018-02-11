@@ -393,7 +393,7 @@ parse_socks(const char *data, size_t datalen, socks_request_t *req,
           req->port = ntohs(get_uint16(data+5+len));
           *drain_out = 5+len+2;
 
-          if (!string_is_valid_hostname(req->address)) {
+          if (!string_is_valid_dest(req->address)) {
             socks_request_set_socks5_error(req, SOCKS5_GENERAL_ERROR);
 
             log_warn(LD_PROTOCOL,
