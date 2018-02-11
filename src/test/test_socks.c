@@ -347,7 +347,7 @@ test_socks_5_supported_commands(void *ptr)
 
   socks_request_clear(socks);
 
-  /* SOCKS 5 should NOT reject RESOLVE [F0] requst for IPv6 address
+  /* SOCKS 5 should NOT reject RESOLVE [F0] request for IPv6 address
    * string if SafeSocks is enabled. */
 
   ADD_DATA(buf, "\x05\x01\x00");
