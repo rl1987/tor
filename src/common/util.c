@@ -1097,7 +1097,8 @@ string_is_valid_dest(const char *string)
 }
 
 /** Return true iff <b>string</b> matches a pattern of DNS names
- * that we allow Tor clients to connect to.
+ * that we allow Tor clients to connect to. We require hostnames to end in
+ * valid TLDs, i.e. either ASCII-alphabetic or punycode.
  *
  * Note: This allows certain technically invalid characters ('_') to cope
  * with misconfigured zones that have been encountered in the wild.
