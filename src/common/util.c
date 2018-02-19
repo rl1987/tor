@@ -1123,7 +1123,8 @@ string_is_valid_hostname(const char *string)
 
   /* Allow a single terminating '.' used rarely to indicate domains
    * are FQDNs rather than relative. */
-  last_label = (char *)smartlist_get(components, smartlist_len(components) - 1);
+  last_label = (char *)smartlist_get(components,
+                                     smartlist_len(components) - 1);
   has_trailing_dot = (last_label[0] == '\0');
   if (has_trailing_dot) {
     smartlist_pop_last(components);
