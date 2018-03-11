@@ -5093,15 +5093,24 @@ assert_connection_ok(connection_t *conn, time_t now)
     tor_assert(!SOCKET_OK(conn->s));
 
   if (conn->outbuf_flushlen > 0) {
-    /* With optimistic data, we may have queued data in
-     * EXIT_CONN_STATE_RESOLVING while the conn is not yet marked to writing.
+    /* When connection output buffer has data for writing, we generally
+     * expect connection to be in process of writing it out. Exceptions:
+     * 1. Exit connection is currently resolving DNS address.
+     * (With optimistic data, we may have queued data in
+     * EXIT_CONN_STATE_RESOLVING while the conn is not yet marked to writing.)
+     * 2. Edge connection is blocked on circuit at the moment.
      * */
-    tor_assert((conn->type == CONN_TYPE_EXIT &&
-                conn->state == EXIT_CONN_STATE_RESOLVING) ||
-               connection_is_writing(conn) ||
-               conn->write_blocked_on_bw ||
-               (CONN_IS_EDGE(conn) &&
-                TO_EDGE_CONN(conn)->edge_blocked_on_circ));
+    if (CONN_IS_EDGE(conn)) {
+      if (!TO_EDGE_CONN(conn)->edge_blocked_on_circ) {
+        tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+      } else if (conn->type == CONN_TYPE_EXIT) {
+        if (conn->state != EXIT_CONN_STATE_RESOLVING) {
+          tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+        }
+      }
+    } else {
+      tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+    }
   }
 
   if (conn->hold_open_until_flushed)
