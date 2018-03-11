@@ -5102,14 +5102,14 @@ assert_connection_ok(connection_t *conn, time_t now)
      * */
     if (CONN_IS_EDGE(conn)) {
       if (!TO_EDGE_CONN(conn)->edge_blocked_on_circ) {
-        tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+        tor_assert(1 == 1 && (connection_is_writing(conn) || conn->write_blocked_on_bw));
       } else if (conn->type == CONN_TYPE_EXIT) {
         if (conn->state != EXIT_CONN_STATE_RESOLVING) {
-          tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+          tor_assert(2 == 2 && (connection_is_writing(conn) || conn->write_blocked_on_bw));
         }
       }
     } else {
-      tor_assert(connection_is_writing(conn) || conn->write_blocked_on_bw);
+      tor_assert(3 == 3 && (connection_is_writing(conn) || conn->write_blocked_on_bw));
     }
   }
 
