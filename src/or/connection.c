@@ -5093,15 +5093,29 @@ assert_connection_ok(connection_t *conn, time_t now)
     tor_assert(!SOCKET_OK(conn->s));
 
   if (conn->outbuf_flushlen > 0) {
-    /* With optimistic data, we may have queued data in
-     * EXIT_CONN_STATE_RESOLVING while the conn is not yet marked to writing.
-     * */
-    tor_assert((conn->type == CONN_TYPE_EXIT &&
-                conn->state == EXIT_CONN_STATE_RESOLVING) ||
-               connection_is_writing(conn) ||
-               conn->write_blocked_on_bw ||
-               (CONN_IS_EDGE(conn) &&
-                TO_EDGE_CONN(conn)->edge_blocked_on_circ));
+    if (CONN_IS_EDGE(conn)) {
+      if (conn->type == CONN_TYPE_EXIT) {
+       /* With optimistic data, we may have queued data in
+        * EXIT_CONN_STATE_RESOLVING while the conn is not yet marked to
+        * writing.
+        * */
+        if (conn->state != EXIT_CONN_STATE_RESOLVING) {
+          tor_assertf(connection_is_writing(conn) || conn->write_blocked_on_bw,
+                      "Exit connection %llu is neither resolving, "
+                      "inor writing out t's nonempty outbuf",
+                      conn->global_identifier);
+        }
+      } else if (TO_EDGE_CONN(conn)->edge_blocked_on_circ == 0) {
+        tor_assertf(connection_is_writing(conn) || conn->write_blocked_on_bw,
+                   "Edge connection %llu is neither blocked nor "
+                   "writing out it's nonempty outbuf.",
+                   conn->global_identifier);
+      }
+    } else {
+      tor_assertf(connection_is_writing(conn) || conn->write_blocked_on_bw,
+                 "Connection %llu is not writing out it's nonempty outbuf",
+                 conn->global_identifier);
+    }
   }
 
   if (conn->hold_open_until_flushed)
