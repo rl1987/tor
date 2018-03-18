@@ -5167,13 +5167,13 @@ assert_connection_ok(connection_t *conn, time_t now)
         if (conn->state != EXIT_CONN_STATE_RESOLVING) {
           tor_assertf(connection_is_writing(conn) || conn->write_blocked_on_bw,
                       "Exit connection %llu is neither resolving, "
-                      "inor writing out t's nonempty outbuf",
+                      "nor writing out it's nonempty outbuf",
                       conn->global_identifier);
         }
       } else if (TO_EDGE_CONN(conn)->edge_blocked_on_circ == 0) {
         tor_assertf(connection_is_writing(conn) || conn->write_blocked_on_bw,
                    "Edge connection %llu is neither blocked nor "
-                   "writing out it's nonempty outbuf.",
+                   "writing out it's nonempty outbuf",
                    conn->global_identifier);
       }
     } else {
