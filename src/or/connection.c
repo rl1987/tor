@@ -1710,6 +1710,8 @@ connection_handle_listener_read(connection_t *conn, int new_type)
     return 0; /* no need to tear down the parent */
   }
 
+  connection_add_child(conn, newconn);
+
   if (connection_init_accepted_conn(newconn, TO_LISTENER_CONN(conn)) < 0) {
     if (! newconn->marked_for_close)
       connection_mark_for_close(newconn);
@@ -2728,6 +2730,22 @@ retry_listener_ports(smartlist_t *old_conns,
   return r;
 }
 
+/** Close and remove all child connections that belong to <b>conn</b>.
+ */
+void
+close_child_connections(connection_t *conn)
+{
+  if (conn->children == NULL)
+    return;
+
+  SMARTLIST_FOREACH_BEGIN(conn->children, connection_t *, child_conn) {
+    connection_close_immediate(child_conn);
+    connection_mark_for_close(child_conn);
+
+    smartlist_remove(conn->children, child_conn);
+  } SMARTLIST_FOREACH_END(child_conn);
+}
+
 /** Launch listeners for each port you should have open.  Only launch
  * listeners who are not already open, and only close listeners we no longer
  * want.
@@ -2769,6 +2787,8 @@ retry_all_listeners(smartlist_t *replaced_conns,
     if (replaced_conns) {
       smartlist_add(replaced_conns, conn);
     } else {
+      close_child_connections(conn);
+
       connection_close_immediate(conn);
       connection_mark_for_close(conn);
     }

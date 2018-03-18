@@ -42,6 +42,7 @@ MOCK_DECL(void, connection_mark_for_close_internal_,
 
 void connection_remove_child(connection_t *parent, connection_t *child);
 void connection_add_child(connection_t *parent, connection_t *child);
+void close_child_connections(connection_t *conn);
 
 #define connection_mark_for_close(c) \
   connection_mark_for_close_((c), __LINE__, SHORT_FILE__)
