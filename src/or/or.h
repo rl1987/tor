@@ -317,7 +317,6 @@ typedef enum {
  *  start accepting OR connections. */
 #define EXT_OR_CONN_STATE_FLUSHING 5
 #define EXT_OR_CONN_STATE_MAX_ 5
-
 #define EXIT_CONN_STATE_MIN_ 1
 /** State for an exit connection: waiting for response from DNS farm. */
 #define EXIT_CONN_STATE_RESOLVING 1
@@ -1402,6 +1401,10 @@ typedef struct connection_t {
   /** Bytes written since last call to control_event_conn_bandwidth_used().
    * Only used if we're configured to emit CONN_BW events. */
   uint32_t n_written_conn_bw;
+
+  /** There could be parent-child relationship between connections. */
+  smartlist_t *children;
+  struct connection_t *parent;
 } connection_t;
 
 /** Subtype of connection_t; used for a listener socket. */

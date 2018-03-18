@@ -670,6 +670,47 @@ connection_free_minimal(connection_t *conn)
   tor_free(mem);
 }
 
+/** Detach <b>conn</b> from it's parent (if any).
+ */
+static void
+connection_detach_from_parent(connection_t *conn)
+{
+  if (conn && conn->parent) {
+    connection_remove_child(conn->parent, conn);
+  }
+}
+
+/** Remove <b>child</b> from <b>parent</b>'s list of child connection
+ * and break parent-child relationship.
+ */
+void
+connection_remove_child(connection_t *parent, connection_t *child)
+{
+  tor_assert(parent);
+  tor_assert(child);
+
+  if (parent->children) {
+    // XXX: thread safety?
+    child->parent = NULL;
+    smartlist_remove(parent->children, child);
+  }
+}
+
+/** Establish parent-child relationship between <b>parent</b> and
+ * <b>child</b>.
+ */
+void
+connection_add_child(connection_t *parent, connection_t *child)
+{
+  tor_assert(parent);
+  tor_assert(child);
+
+  if (parent->children) {
+    smartlist_add(parent->children, child);
+    child->parent = parent;
+  }
+}
+
 /** Make sure <b>conn</b> isn't in any of the global conn lists; then free it.
  */
 MOCK_IMPL(void,
@@ -709,6 +750,7 @@ connection_free_,(connection_t *conn))
   }
 
   connection_unregister_events(conn);
+  connection_detach_from_parent(conn);
   connection_free_minimal(conn);
 }
 
@@ -1426,6 +1468,9 @@ connection_listener_new(const struct sockaddr *listensockaddr,
    * the exhaustion flag will always be zero here though.
    */
   connection_check_oos(get_n_open_sockets(), 0);
+
+  conn->children = smartlist_new();
+  conn->parent = NULL;
 
   return conn;
 
