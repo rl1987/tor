@@ -1743,8 +1743,8 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     sock = tor_open_socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
     addr_len = (socklen_t)sizeof(struct sockaddr_in);
     sin->sin_family = AF_INET;
-    sin->sin_addr.s_addr = 
-    loopback ? htonl(0x7f000001) : htonl(0x12000001); 
+    sin->sin_addr.s_addr =
+    loopback ? htonl(0x7f000001) : htonl(0x12000001);
                   /* 127.0.0.1      18.0.0.1 */
   } else {
     return -1;
@@ -1771,7 +1771,7 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     goto err;
   }
 
-  if ((!loopback && tor_addr_is_loopback(addr)) 
+  if ((!loopback && tor_addr_is_loopback(addr))
       || tor_addr_is_multicast(addr)) {
     log_fn(severity, LD_NET, "Address that we determined via UDP socket"
                              " magic is unsuitable for public comms.");
@@ -1784,7 +1784,6 @@ get_interface_address6_via_udp_socket_hack,(int severity,
   } else {
     r=0;
   }
- }
 
  err:
   if (sock >= 0)
@@ -1804,7 +1803,7 @@ get_interface_address6_via_udp_socket_hack,(int severity,
  * find the address of a loopback interface.
  */
 MOCK_IMPL(int,
-get_interface_address6,(int severity, sa_family_t family, 
+get_interface_address6,(int severity, sa_family_t family,
                         tor_addr_t *addr,
                         int loopback))
 {
