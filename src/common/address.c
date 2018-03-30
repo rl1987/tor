@@ -1406,9 +1406,11 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
       continue;
     if (family != AF_UNSPEC && i->ifa_addr->sa_family != family)
       continue;
-    if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
+    if (loopback && (i->ifa_flags & IFF_LOOPBACK) == 0)
       continue;
-    if (loopback && !tor_addr_is_loopback(&tmp))
+    if (!loopback && (i->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
+      continue;
+    if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
       continue;
     smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
   }
@@ -1459,6 +1461,10 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
 
   for (address = addresses; address; address = address->Next) {
     const IP_ADAPTER_UNICAST_ADDRESS *a;
+    if (loopback && address->IfType != IF_TYPE_SOFTWARE_LOOPBACK)
+      continue;
+    if (!loopback && address->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
+      continue;
     for (a = address->FirstUnicastAddress; a; a = a->Next) {
       /* Yes, it's a linked list inside a linked list */
       const struct sockaddr *sa = a->Address.lpSockaddr;
@@ -1466,8 +1472,6 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
       if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
         continue;
       if (tor_addr_from_sockaddr(&tmp, sa, NULL) < 0)
-        continue;
-      if (loopback && !tor_addr_is_loopback(&tmp))
         continue;
       smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
     }
@@ -1585,12 +1589,16 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
     tor_addr_t tmp;
     int valid_sa_family = (sa->sa_family == AF_INET ||
                            sa->sa_family == AF_INET6);
+    int correct_loopbackness = loopback ?
+      (r->ifr_flags & IFF_LOOPBACK) == IFF_LOOPBACK :
+      (r->ifr_flags & IFF_LOOPBACK) == 0;
 
-    int conversion_success = (tor_addr_from_sockaddr(&tmp, sa, NULL) == 0);
+    if (valid_sa_family && correct_loopbackness) {
+      int conversion_success = (tor_addr_from_sockaddr(&tmp, sa, NULL) == 0);
 
-    if (valid_sa_family && conversion_success) {
-      if (!loopback || tor_addr_is_loopback(&tmp))
+      if (conversion_success) {
         smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
+      }
     }
 
     buf += _SIZEOF_ADDR_IFREQ(*r);
