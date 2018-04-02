@@ -205,7 +205,9 @@ const char *fmt_addrport(const tor_addr_t *addr, uint16_t port);
 const char * fmt_addr32(uint32_t addr);
 
 MOCK_DECL(int,get_interface_address6,(int severity, sa_family_t family,
-tor_addr_t *addr, int loopback));
+tor_addr_t *addr));
+MOCK_DECL(int,get_loopback_address6,(int severity, sa_family_t family,
+tor_addr_t *addr));
 void interface_address6_list_free_(smartlist_t * addrs);// XXXX
 
 void free_interface_address6_list(smartlist_t * addrs);
@@ -214,8 +216,11 @@ void free_interface_address6_list(smartlist_t * addrs);
 
 MOCK_DECL(smartlist_t *,get_interface_address6_list,(int severity,
                                                      sa_family_t family,
-                                                     int include_internal,
-                                                     int loopback));
+                                                     int include_internal));
+
+MOCK_DECL(smartlist_t *,get_loopback_address6_list,(int severity,
+                                                    sa_family_t family,
+                                                    int include_internal));
 
 /** Flag to specify how to do a comparison between addresses.  In an "exact"
  * comparison, addresses are equivalent only if they are in the same family
@@ -328,8 +333,7 @@ int addr_mask_get_bits(uint32_t mask);
 #define INET_NTOA_BUF_LEN 16
 int tor_inet_ntoa(const struct in_addr *in, char *buf, size_t buf_len);
 char *tor_dup_ip(uint32_t addr) ATTR_MALLOC;
-MOCK_DECL(int,get_interface_address,(int severity, uint32_t *addr,
-                                     int loopback));
+MOCK_DECL(int,get_interface_address,(int severity, uint32_t *addr));
 #define interface_address_list_free(lst)\
   interface_address6_list_free(lst)
 /** Free a smartlist of IP addresses returned by get_interface_address_list.
@@ -341,8 +345,8 @@ free_interface_address_list(smartlist_t *addrs)
 }
 
 /** Return a smartlist of the IPv4 addresses of all interfaces on the server.
- * Excludes loopback (unless <b>loopback</b> is true) and multicast addresses.
- * Only includes internal addresses if include_internal is true.
+ * Excludes loopback and multicast addresses.
+ * Only includes internal addresses if <b>include_internal</b> is true.
  * (Note that a relay behind NAT may use an
  * internal address to connect to the Internet.)
  * An empty smartlist means that there are no IPv4 addresses.
@@ -350,11 +354,9 @@ free_interface_address_list(smartlist_t *addrs)
  * Use free_interface_address_list to free the returned list.
  */
 static inline smartlist_t *
-get_interface_address_list(int severity, int include_internal,
-                           int loopback)
+get_interface_address_list(int severity, int include_internal)
 {
-  return get_interface_address6_list(severity, AF_INET, include_internal,
-                                     loopback);
+  return get_interface_address6_list(severity, AF_INET, include_internal);
 }
 
 tor_addr_port_t *tor_addr_port_new(const tor_addr_t *addr, uint16_t port);

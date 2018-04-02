@@ -744,7 +744,7 @@ test_address_get_if_addrs_list_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 1, 0);
+  results = get_interface_address_list(LOG_ERR, 1);
 
   tt_ptr_op(results, OP_NE, NULL);
   /* When the network is down, a system might not have any non-local
@@ -775,7 +775,7 @@ test_address_get_if_addrs_list_no_internal(void *arg)
 
   (void)arg;
 
-  results = get_interface_address_list(LOG_ERR, 0, 0);
+  results = get_interface_address_list(LOG_ERR, 0);
 
   tt_ptr_op(results, OP_NE, NULL);
   /* Work even on systems with only internal IPv4 addresses */
@@ -806,7 +806,7 @@ test_address_get_if_addrs6_list_internal(void *arg)
 
   /* We might drop a log_err */
   setup_full_capture_of_logs(LOG_ERR);
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
   tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
   if (smartlist_len(mock_saved_logs()) == 1) {
     expect_log_msg_containing_either4("connect() failed",
@@ -849,7 +849,7 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
 
   /* We might drop a log_err */
   setup_full_capture_of_logs(LOG_ERR);
-  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
+  results = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
   tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
   if (smartlist_len(mock_saved_logs()) == 1) {
     expect_log_msg_containing_either4("connect() failed",
@@ -931,21 +931,21 @@ test_address_get_if_addrs_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1, 0);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
   tt_ptr_op(results1, OP_NE, NULL);
   tt_int_op(smartlist_len(results1),OP_EQ,0);
 
-  results2 = get_interface_address_list(LOG_ERR, 1, 0);
+  results2 = get_interface_address_list(LOG_ERR, 1);
   tt_ptr_op(results2, OP_NE, NULL);
   tt_int_op(smartlist_len(results2),OP_EQ,0);
 
-  rv = get_interface_address6(LOG_ERR, AF_INET6, &ipv6_addr, 0);
+  rv = get_interface_address6(LOG_ERR, AF_INET6, &ipv6_addr);
   tt_int_op(rv, OP_EQ, -1);
 
-  rv = get_interface_address(LOG_ERR, &ipv4h_addr, 0);
+  rv = get_interface_address(LOG_ERR, &ipv4h_addr);
   tt_int_op(rv, OP_EQ, -1);
 
-  rv = get_interface_address(LOG_ERR, &ipv4h_addr, 0);
+  rv = get_interface_address(LOG_ERR, &ipv4h_addr);
   tt_assert(rv == -1);
 
  done:
@@ -968,11 +968,11 @@ test_address_get_if_addrs_no_internal_fail(void *arg)
   MOCK(get_interface_address6_via_udp_socket_hack,
        mock_get_interface_address6_via_udp_socket_hack_fail);
 
-  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0, 0);
+  results1 = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
   tt_ptr_op(results1, OP_NE, NULL);
   tt_int_op(smartlist_len(results1),OP_EQ,0);
 
-  results2 = get_interface_address_list(LOG_ERR, 0, 0);
+  results2 = get_interface_address_list(LOG_ERR, 0);
   tt_ptr_op(results2, OP_NE, NULL);
   tt_int_op(smartlist_len(results2),OP_EQ,0);
 
@@ -993,7 +993,7 @@ test_address_get_if_addrs(void *arg)
 
   (void)arg;
 
-  rv = get_interface_address(LOG_ERR, &addr_h, 0);
+  rv = get_interface_address(LOG_ERR, &addr_h);
 
   /* When the network is down, a system might not have any non-local
    * non-multicast IPv4 addresses, not even internal ones.
@@ -1020,7 +1020,7 @@ test_address_get_if_addrs6(void *arg)
 
   (void)arg;
 
-  rv = get_interface_address6(LOG_ERR, AF_INET6, &tor_addr, 0);
+  rv = get_interface_address6(LOG_ERR, AF_INET6, &tor_addr);
 
   /* Work even on systems without IPv6 interfaces */
   if (rv == 0) {

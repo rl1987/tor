@@ -1291,12 +1291,10 @@ static smartlist_t *mock_ipv6_addrs = NULL;
 static smartlist_t *
 mock_get_interface_address6_list(int severity,
                             sa_family_t family,
-                            int include_internal,
-                            int loopback)
+                            int include_internal)
 {
   (void)severity;
   (void)include_internal;
-  (void)loopback;
   smartlist_t *clone_list = smartlist_new();
   smartlist_t *template_list = NULL;
 
@@ -1331,9 +1329,9 @@ test_policies_reject_interface_address(void *arg)
 {
   smartlist_t *policy = NULL;
   smartlist_t *public_ipv4_addrs =
-    get_interface_address6_list(LOG_INFO, AF_INET, 0, 0);
+    get_interface_address6_list(LOG_INFO, AF_INET, 0);
   smartlist_t *public_ipv6_addrs =
-    get_interface_address6_list(LOG_INFO, AF_INET6, 0, 0);
+    get_interface_address6_list(LOG_INFO, AF_INET6, 0);
   tor_addr_t ipv4_addr, ipv6_addr;
   (void)arg;
 

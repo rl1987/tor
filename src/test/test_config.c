@@ -1018,10 +1018,9 @@ static int n_get_interface_address = 0;
  * <b>n_get_interface_address</b> by one every time it is called.
  */
 static int
-get_interface_address_08080808(int severity, uint32_t *addr, int loopback)
+get_interface_address_08080808(int severity, uint32_t *addr)
 {
   (void)severity;
-  (void)loopback;
 
   n_get_interface_address++;
 
@@ -1044,10 +1043,9 @@ static sa_family_t last_address6_family;
  */
 static int
 get_interface_address6_replacement(int severity, sa_family_t family,
-                                   tor_addr_t *addr, int loopback)
+                                   tor_addr_t *addr)
 {
   (void)severity;
-  (void)loopback;
 
   last_address6_family = family;
   n_get_interface_address6++;
@@ -1070,11 +1068,10 @@ static int n_get_interface_address_failure = 0;
  * every time this function is called.
  */
 static int
-get_interface_address_failure(int severity, uint32_t *addr, int loopback)
+get_interface_address_failure(int severity, uint32_t *addr)
 {
   (void)severity;
   (void)addr;
-  (void)loopback;
 
   n_get_interface_address_failure++;
 
@@ -1092,11 +1089,10 @@ static int n_get_interface_address6_failure = 0;
  */
 static int
 get_interface_address6_failure(int severity, sa_family_t family,
-                               tor_addr_t *addr, int loopback)
+                               tor_addr_t *addr)
 {
   (void)severity;
   (void)addr;
-  (void)loopback;
    n_get_interface_address6_failure++;
    last_address6_family = family;
 

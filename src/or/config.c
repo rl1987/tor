@@ -2730,7 +2730,7 @@ resolve_my_address(int warn_severity, const or_options_t *options,
       log_fn(notice_severity, LD_CONFIG,
              "Could not resolve guessed local hostname '%s'. "
              "Trying something else.", hostname);
-      if (get_interface_address(warn_severity, &interface_ip, 0)) {
+      if (get_interface_address(warn_severity, &interface_ip)) {
         log_fn(warn_severity, LD_CONFIG,
                "Could not get local interface IP address. Failing.");
         return -1;
@@ -2751,8 +2751,7 @@ resolve_my_address(int warn_severity, const or_options_t *options,
                "resolves to a private IP address (%s). Trying something "
                "else.", hostname, fmt_addr32(addr));
 
-        if (get_interface_address6(warn_severity, AF_INET, &interface_ip,
-                                   0) < 0) {
+        if (get_interface_address6(warn_severity, AF_INET, &interface_ip) < 0) {
           log_fn(warn_severity, LD_CONFIG,
                  "Could not get local interface IP address. Too bad.");
         } else if (tor_addr_is_internal(&interface_ip, 0)) {
