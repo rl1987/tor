@@ -1410,6 +1410,8 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
       continue;
     if (!loopback && (i->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
       continue;
+    if (tor_addr_is_null(&tmp))
+      continue;
     if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
       continue;
     smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
@@ -1472,6 +1474,8 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses,
       if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
         continue;
       if (tor_addr_from_sockaddr(&tmp, sa, NULL) < 0)
+        continue;
+      if (tor_addr_is_null(&tmp))
         continue;
       smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
     }
@@ -1596,6 +1600,8 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
     if (valid_sa_family && correct_loopbackness) {
       int conversion_success = (tor_addr_from_sockaddr(&tmp, sa, NULL) == 0);
 
+      if (tor_addr_is_null(&tmp))
+        continue;
       if (conversion_success) {
         smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
       }
