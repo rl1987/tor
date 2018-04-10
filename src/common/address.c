@@ -1816,7 +1816,7 @@ get_interface_address6_via_udp_socket_hack,(int severity,
 }
 
 static smartlist_t *
-get_interface_address6_list_impl(int severity, sa_family_t family, 
+get_interface_address6_list_impl(int severity, sa_family_t family,
                                  int include_internal, int loopback)
 {
   smartlist_t *addrs;
