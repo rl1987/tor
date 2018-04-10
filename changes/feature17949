@@ -1,5 +1,0 @@
-  o Minor features:
-    - Add loopback parameter to get_interface_address{6} and
-      subfunctions to make loopback interface address search
-      more efficient. Implements feature 17949.
-
