@@ -1796,10 +1796,12 @@ get_interface_address6_via_udp_socket_hack,(int severity,
     goto err;
   }
 
-  if ((!loopback && tor_addr_is_loopback(addr))
-      || tor_addr_is_multicast(addr)) {
+  if (tor_addr_is_null(addr) || tor_addr_is_multicast(addr)) {
     log_fn(severity, LD_NET, "Address that we determined via UDP socket"
-                             " magic is unsuitable for public comms.");
+                             " magic is unsuitable for usage by Tor.");
+  } else if (!loopback && tor_addr_is_loopback(addr)) {
+    log_fn(severity, LD_NET, "Tried to get public adddress via UDP socket"
+                             " trick, but got a loopback address.");
   } else if (loopback && !tor_addr_is_loopback(addr)) {
     log_fn(severity, LD_NET, "Tried to perform an UDP socket trick to "
                              "get loopback interface address, but "
