@@ -1877,7 +1877,11 @@ get_interface_address6_list_impl(int severity, sa_family_t family,
 }
 
 /**
- * TODO: description
+ * If <b>loopback</b> is false, fetch a public network interface
+ * address (of given <b>family</b>) and put it into <b>addr</b>.
+ * Otherwise, do so with loopback network interface.
+ *
+ * Return 0 on success.
  */
 static int
 get_interface_address6_impl(int severity, sa_family_t family,
