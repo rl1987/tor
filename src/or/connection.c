@@ -112,6 +112,11 @@
 #include <sys/un.h>
 #endif
 
+// TODO: come up with a better way to check if we're compiling on Linux
+#if defined(HAVE_LINUX_TYPES_H) || defined(_WIN32)
+#define ENABLE_LISTENER_REBIND
+#endif
+
 static connection_t *connection_listener_new(
                                const struct sockaddr *listensockaddr,
                                socklen_t listensocklen, int type,
@@ -2651,6 +2656,9 @@ retry_listener_ports(smartlist_t *old_conns,
                      smartlist_t *replacements,
                      int control_listeners_only)
 {
+#ifndef ENABLE_LISTENER_REBIND
+  (void)replacements;
+#endif
 
   smartlist_t *launch = smartlist_new();
   int r = 0;
@@ -2694,7 +2702,7 @@ retry_listener_ports(smartlist_t *old_conns,
           found_port = wanted;
           break;
         }
-
+#ifdef ENABLE_LISTENER_REBIND
         int may_need_rebind = port_matches_exact &
                               (tor_addr_is_null(&wanted->addr) ^
                                tor_addr_is_null(&conn->addr));
@@ -2708,6 +2716,7 @@ retry_listener_ports(smartlist_t *old_conns,
 
           SMARTLIST_DEL_CURRENT(launch, wanted);
         }
+#endif
       }
     } SMARTLIST_FOREACH_END(wanted);
 
@@ -2772,6 +2781,7 @@ retry_all_listeners(smartlist_t *replaced_conns,
                            close_all_noncontrol) < 0)
     retval = -1;
 
+#ifdef ENABLE_LISTENER_REBIND
   SMARTLIST_FOREACH_BEGIN(replacements, struct replacement_s *, r) {
     int addr_in_use = 0;
     int skip = 0;
@@ -2801,6 +2811,7 @@ retry_all_listeners(smartlist_t *replaced_conns,
     tor_free(r);
     SMARTLIST_DEL_CURRENT(replacements, r);
   } SMARTLIST_FOREACH_END(r);
+#endif
 
   /* Any members that were still in 'listeners' don't correspond to
    * any configured port.  Kill 'em. */
