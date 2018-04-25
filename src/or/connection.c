@@ -112,8 +112,7 @@
 #include <sys/un.h>
 #endif
 
-// TODO: come up with a better way to check if we're compiling on Linux
-#if defined(HAVE_LINUX_TYPES_H) || defined(_WIN32)
+#if defined(__linux__) || defined(_WIN32)
 #define ENABLE_LISTENER_REBIND
 #endif
 
