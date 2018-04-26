@@ -2714,6 +2714,7 @@ retry_listener_ports(smartlist_t *old_conns,
           smartlist_add(replacements, replacement);
 
           SMARTLIST_DEL_CURRENT(launch, wanted);
+          SMARTLIST_DEL_CURRENT(old_conns, conn);
         }
 #endif
       }
