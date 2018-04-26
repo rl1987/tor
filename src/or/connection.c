@@ -2802,9 +2802,9 @@ retry_all_listeners(smartlist_t *new_conns, int close_all_noncontrol)
                                                   &skip, &addr_in_use);
     }
 
-    if (new_conn) {
-      smartlist_add(new_conns, new_conn);
-    }
+    tor_assert(new_conn);
+
+    smartlist_add(new_conns, new_conn);
 
     log_notice(LD_NET, "Closed no-longer-configured %s on %s:%d "
                        "(replaced by %s:%d)",
