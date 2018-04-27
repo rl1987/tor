@@ -311,7 +311,7 @@ test_address_get_if_addrs_win32(void *arg)
   results = get_interface_addresses_win32(LOG_ERR, AF_UNSPEC, 0);
 
   tt_int_op(smartlist_len(results),OP_GE,1);
-  tt_assert(smartlist_contains_localhost_tor_addr(results));
+  tt_assert(!smartlist_contains_localhost_tor_addr(results));
   tt_assert(!smartlist_contains_null_tor_addr(results));
 
   /* If there are addresses, they must be IPv4 or IPv6 */
@@ -338,6 +338,7 @@ test_address_ip_adapter_addresses_to_smartlist(void *arg)
   IP_ADAPTER_UNICAST_ADDRESS *unicast21;
 
   smartlist_t *result = NULL;
+  smartlist_t *result2 = NULL;
 
   struct sockaddr_in *sockaddr_test1;
   struct sockaddr_in *sockaddr_test2;
