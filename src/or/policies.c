@@ -3000,7 +3000,7 @@ getinfo_helper_policies(control_connection_t *conn,
     const routerinfo_t *me = router_get_my_routerinfo();
 
     if (!me) {
-      *errmsg = "router_get_my_routerinfo returned NULL";
+      *errmsg = "Not running in server mode";
       return -1;
     }
 
@@ -3052,7 +3052,7 @@ getinfo_helper_policies(control_connection_t *conn,
     }
 
     if (!me) {
-      *errmsg = "router_get_my_routerinfo returned NULL";
+      *errmsg = "Not running in server mode";
       return -1;
     }
 
