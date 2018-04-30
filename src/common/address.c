@@ -1821,6 +1821,15 @@ get_interface_address6_via_udp_socket_hack,(int severity,
   return r;
 }
 
+/**
+ * Return a list of <b>tor_addr_t</b> objects with network interface
+ * addresses that we find on the system. If <b>include_internal</b>
+ * is true, include non public addresses (e.g. for Tor instances
+ * running behind NAT).
+ *
+ * If <b>loopback</b> is true, only return loopback addresses. Otherwise,
+ * only return non-loopback addresses.
+ */
 static smartlist_t *
 get_interface_address6_list_impl(int severity, sa_family_t family,
                                  int include_internal, int loopback)
