@@ -943,7 +943,7 @@ test_address_get_if_addrs_internal_fail(void *arg)
   tt_int_op(rv, OP_EQ, -1);
 
   rv = get_interface_address(LOG_ERR, &ipv4h_addr);
-  tt_assert(rv == -1);
+  tt_int_op(rv, OP_EQ, -1);
 
  done:
   UNMOCK(get_interface_addresses_raw);
