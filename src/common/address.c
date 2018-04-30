@@ -1799,12 +1799,12 @@ get_interface_address6_via_udp_socket_hack,(int severity,
 
   if (tor_addr_is_null(addr) || tor_addr_is_multicast(addr)) {
     log_fn(severity, LD_NET, "Address that we determined via UDP socket"
-                             " magic is unsuitable for usage by Tor.");
+                             " fallback technique is unusable by Tor.");
   } else if (!loopback && tor_addr_is_loopback(addr)) {
     log_fn(severity, LD_NET, "Tried to get public adddress via UDP socket"
-                             " trick, but got a loopback address.");
+                             " fallback technique, but got a loopback address.");
   } else if (loopback && !tor_addr_is_loopback(addr)) {
-    log_fn(severity, LD_NET, "Tried to perform an UDP socket trick to "
+    log_fn(severity, LD_NET, "Tried to perform an UDP fallback technique to "
                              "get loopback interface address, but "
                              "got non-loopback address instead. Your "
                              "loopback configuration might not be "
