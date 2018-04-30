@@ -1802,7 +1802,8 @@ get_interface_address6_via_udp_socket_hack,(int severity,
                              " fallback technique is unusable by Tor.");
   } else if (!loopback && tor_addr_is_loopback(addr)) {
     log_fn(severity, LD_NET, "Tried to get public adddress via UDP socket"
-                             " fallback technique, but got a loopback address.");
+                             " fallback technique, but got a loopback "
+                             "address.");
   } else if (loopback && !tor_addr_is_loopback(addr)) {
     log_fn(severity, LD_NET, "Tried to perform an UDP fallback technique to "
                              "get loopback interface address, but "
