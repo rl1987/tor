@@ -1936,7 +1936,8 @@ get_interface_address6,(int severity, sa_family_t family,
 }
 
 /**
- * TODO: description
+ * Set <b>addr</b> to address of loopback network interface (of
+ * address family <b>family</b>.
  */
 MOCK_IMPL(int,
 get_loopback_address6,(int severity, sa_family_t family,
