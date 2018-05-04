@@ -455,6 +455,7 @@ test_address_ifreq_to_smartlist(void *arg)
 
   ifr = tor_malloc(sizeof(struct ifreq));
   memset(ifr,0,sizeof(struct ifreq));
+  ifr->ifr_flags = IFF_LOOPBACK;
   strlcpy(ifr->ifr_name,"lo",3);
   sockaddr = (struct sockaddr_in *) &(ifr->ifr_ifru.ifru_addr);
   sockaddr_in_from_string("127.0.0.1",sockaddr);
@@ -480,6 +481,7 @@ test_address_ifreq_to_smartlist(void *arg)
 
   ifr = tor_realloc(ifr,2*sizeof(struct ifreq));
   ifr_next = ifr+1;
+  ifr_next->ifr_flags = 0;
   strlcpy(ifr_next->ifr_name,"eth1",5);
   ifc->ifc_len = 2*sizeof(struct ifreq);
   ifc->ifc_ifcu.ifcu_req = ifr;
@@ -494,14 +496,6 @@ test_address_ifreq_to_smartlist(void *arg)
   tt_int_op(smartlist_len(results),OP_EQ,1);
 
   tor_addr = smartlist_get(results, 0);
-  addr_len =
-  tor_addr_to_sockaddr(tor_addr,0,(struct sockaddr *)sockaddr_to_check,
-                       sizeof(struct sockaddr_in));
-
-  tt_int_op(addr_len,OP_EQ,sizeof(struct sockaddr_in));
-  tt_assert(sockaddr_in_are_equal(sockaddr,sockaddr_to_check));
-
-  tor_addr = smartlist_get(results, 1);
   addr_len =
   tor_addr_to_sockaddr(tor_addr,0,(struct sockaddr *)sockaddr_to_check,
                        sizeof(struct sockaddr_in));

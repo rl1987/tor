@@ -1596,6 +1596,8 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
                                (r->ifr_flags & IFF_LOOPBACK) == IFF_LOOPBACK :
                                (r->ifr_flags & IFF_LOOPBACK) == 0;
 
+    buf += _SIZEOF_ADDR_IFREQ(*r);
+
     if (correct_loopbackness) {
       const struct sockaddr *sa = &r->ifr_addr;
       tor_addr_t tmp;
@@ -1613,7 +1615,6 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
       }
     }
 
-    buf += _SIZEOF_ADDR_IFREQ(*r);
   }
 
   tor_free(r);
