@@ -1611,6 +1611,10 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
           continue;
         if (tor_addr_is_multicast(&tmp))
           continue;
+        if (loopback && !tor_addr_is_loopback(&tmp))
+          continue;
+        if (!loopback && tor_addr_is_loopback(&tmp))
+          continue;
         smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
       }
     }
