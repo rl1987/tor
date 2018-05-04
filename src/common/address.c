@@ -1605,8 +1605,6 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
       int conversion_success = (tor_addr_from_sockaddr(&tmp, sa, NULL) == 0);
 
       if (valid_sa_family && conversion_success) {
-        if (!loopback || tor_addr_is_loopback(&tmp))
-          continue;
         if (tor_addr_is_null(&tmp))
           continue;
         if (tor_addr_is_multicast(&tmp))
