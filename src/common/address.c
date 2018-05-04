@@ -1618,7 +1618,6 @@ ifreq_to_smartlist(char *buf, size_t buflen, int loopback)
         smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
       }
     }
-
   }
 
   tor_free(r);
