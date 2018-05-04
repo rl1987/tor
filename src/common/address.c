@@ -1397,6 +1397,7 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
 
   for (i = ifa; i; i = i->ifa_next) {
     tor_addr_t tmp;
+    memset(&tmp, 0, sizeof(tor_addr_t));
     if ((i->ifa_flags & (IFF_UP | IFF_RUNNING)) != (IFF_UP | IFF_RUNNING))
       continue;
     if (!i->ifa_addr)
@@ -1410,13 +1411,11 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family,
       continue;
     if (!loopback && (i->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
       continue;
+    if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
+      continue;
     if (tor_addr_is_null(&tmp))
       continue;
     if (tor_addr_is_multicast(&tmp))
-      continue;
-    if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
-      continue;
-    if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
       continue;
     smartlist_add(result, tor_memdup(&tmp, sizeof(tmp)));
   }
