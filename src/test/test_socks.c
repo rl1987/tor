@@ -81,7 +81,7 @@ test_socks_4_supported_commands(void *ptr)
 
   tt_int_op(0,OP_EQ, buf_datalen(buf));
 
-  /* SOCKS 4 Send CONNECT [01] to IP address 2.2.2.2:4370 */
+  /* SOCKS 4 Send CONNECT [01] to IP address 2.2.2.3:4370 */
   ADD_DATA(buf, "\x04\x01\x11\x12\x02\x02\x02\x03\x00");
   tt_int_op(fetch_from_buf_socks(buf, socks, get_options()->TestSocks,
                                  get_options()->SafeSocks),
@@ -97,7 +97,7 @@ test_socks_4_supported_commands(void *ptr)
   tt_int_op(0,OP_EQ, buf_datalen(buf));
   socks_request_clear(socks);
 
-  /* SOCKS 4 Send CONNECT [01] to IP address 2.2.2.2:4369 with userid*/
+  /* SOCKS 4 Send CONNECT [01] to IP address 2.2.2.4:4369 with userid*/
   ADD_DATA(buf, "\x04\x01\x11\x12\x02\x02\x02\x04me\x00");
   tt_int_op(fetch_from_buf_socks(buf, socks, 1, 0),
             OP_EQ, 1);
@@ -118,7 +118,7 @@ test_socks_4_supported_commands(void *ptr)
   ADD_DATA(buf, "\x04\xF0\x01\x01\x00\x00\x00\x02me\x00torproject.org\x00");
   tt_int_op(fetch_from_buf_socks(buf, socks, 1,
                                  get_options()->SafeSocks),
-            OP_EQ, 1);
+            OP_EQ, 1); // !!! - socks4_client_request_parse fails
   tt_int_op(4,OP_EQ, socks->socks_version);
   tt_int_op(0,OP_EQ, socks->replylen); /* XXX: shouldn't tor reply? */
   tt_str_op("torproject.org",OP_EQ, socks->address);
@@ -141,7 +141,7 @@ test_socks_4_bad_arguments(void *ptr)
                                  get_options()->SafeSocks),
             OP_EQ, -1);
   buf_clear(buf);
-  expect_log_msg_containing("Port or DestIP is zero.");
+  expect_log_msg_containing("Port or DestIP is zero."); // !!!
   mock_clean_saved_logs();
 
   /* Try with 0 port */
@@ -191,7 +191,7 @@ test_socks_4_bad_arguments(void *ptr)
   tt_int_op(fetch_from_buf_socks(buf, socks, 1, 0),
             OP_EQ, -1);
   buf_clear(buf);
-  expect_log_msg_containing("Destaddr too long.");
+  expect_log_msg_containing("parsing failed - invalid request.");
   mock_clean_saved_logs();
 
   /* Socks4, bogus hostname */
