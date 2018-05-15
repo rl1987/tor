@@ -118,7 +118,7 @@ test_socks_4_supported_commands(void *ptr)
   ADD_DATA(buf, "\x04\xF0\x01\x01\x00\x00\x00\x02me\x00torproject.org\x00");
   tt_int_op(fetch_from_buf_socks(buf, socks, 1,
                                  get_options()->SafeSocks),
-            OP_EQ, 1); // !!! - socks4_client_request_parse fails
+            OP_EQ, 1);
   tt_int_op(4,OP_EQ, socks->socks_version);
   tt_int_op(0,OP_EQ, socks->replylen); /* XXX: shouldn't tor reply? */
   tt_str_op("torproject.org",OP_EQ, socks->address);
