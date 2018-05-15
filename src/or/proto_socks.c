@@ -219,7 +219,7 @@ process_socks4_request(socks_request_t *req, int is_socks4a,
 static int
 parse_socks5_methods_request(const uint8_t *raw_data, socks_request_t *req,
                              size_t datalen, int *have_user_pass,
-                             int *have_no_auth)
+                             int *have_no_auth, size_t *drain_out)
 {
   int res = 1;
   socks5_client_version_t *trunnel_req;
@@ -231,6 +231,7 @@ parse_socks5_methods_request(const uint8_t *raw_data, socks_request_t *req,
 
   tor_assert(have_no_auth);
   tor_assert(have_user_pass);
+  tor_assert(drain_out);
 
   if (parsed == -1) {
     log_warn(LD_APP, "socks5: parsing failed - invalid version "
@@ -268,7 +269,9 @@ parse_socks5_methods_request(const uint8_t *raw_data, socks_request_t *req,
   }
   
   end:
+  *drain_out = (size_t)parsed;
   socks5_client_version_free(trunnel_req);
+
   return res;
 }
 
@@ -276,7 +279,7 @@ static int
 process_socks5_methods_request(socks_request_t *req, int have_user_pass,
                                int have_no_auth)
 {
-  int res = 1;
+  int res = 0;
   socks5_server_method_t *trunnel_resp = socks5_server_method_new();
 
   socks5_server_method_set_version(trunnel_resp, 5);
@@ -292,6 +295,8 @@ process_socks5_methods_request(socks_request_t *req, int have_user_pass,
   } else if (have_no_auth) {
     req->auth_type = SOCKS_NO_AUTH;
     socks5_server_method_set_method(trunnel_resp, SOCKS_NO_AUTH);
+
+    req->socks_version = 5;
 
     log_debug(LD_APP,"socks5: accepted method 0 (no authentication)");
   } else {
@@ -356,12 +361,15 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
   int res = 0;
   size_t datalen = buf_datalen(buf);
   uint8_t *raw_data;
+  uint8_t *raw_ptr;
   uint8_t socks_version;
 
   raw_data = tor_malloc(datalen);
   memset(raw_data, 0, datalen);
 
   buf_peek(buf, (char *)raw_data, datalen);
+
+  raw_ptr = raw_data;
 
   socks_version = (uint8_t)raw_data[0];
 
@@ -394,7 +402,8 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
     res = 1;
     goto end;
   } else if (socks_version == 5) {
-    if (buf_datalen(buf) < 2) { /* version and another byte */
+    size_t n_drain = 0;
+    if (datalen < 2) { /* version and another byte */
       res = 0;
       goto end;
     }
@@ -409,7 +418,8 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
                                                       req,
                                                       datalen,
                                                       &have_user_pass,
-                                                      &have_no_auth);
+                                                      &have_no_auth,
+                                                      &n_drain);
 
       if (parse_status != 1) {
         res = parse_status;
@@ -420,13 +430,15 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
                                                           have_user_pass,
                                                           have_no_auth);
 
-      if (process_status != 1) {
+      if (process_status == -1) {
         res = process_status;
         goto end;
       }
 
-      buf_clear(buf);
-      res = 1;
+      buf_drain(buf, n_drain); // TODO: do it like this for SOCKS4/4a as well
+      raw_ptr += n_drain;
+      datalen -= n_drain;
+      res = 0;
       goto end;
     }
   }
