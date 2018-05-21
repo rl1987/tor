@@ -392,12 +392,14 @@ process_socks5_userpass_auth(socks_request_t *req)
   socks5_server_userpass_auth_t *trunnel_resp =
     socks5_server_userpass_auth_new();
 
-  if (!req->got_auth && req->auth_type != SOCKS_USER_PASS) {
+  // XXX: do we want to support SOCKS5 clients that violate the RFCs
+  // by sending username/password message before negotiating?
+  if (req->auth_type != SOCKS_USER_PASS) {
     res = -1;
     goto end;
   }
 
-  socks5_server_userpass_auth_set_version(trunnel_resp, 5);
+  socks5_server_userpass_auth_set_version(trunnel_resp, 1);
   socks5_server_userpass_auth_set_status(trunnel_resp, 0); // auth OK
 
   const char *errmsg = socks5_server_userpass_auth_check(trunnel_resp);
@@ -484,9 +486,10 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
         res = process_status;
         goto end;
       }
-    }
 
-    if (req->socks_version != 5) {
+      res = 0;
+      goto end;
+    } else if (req->socks_version != 5) {
       int have_user_pass, have_no_auth;
       int parse_status = parse_socks5_methods_request(raw_data,
                                                       req,
@@ -512,6 +515,9 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
       res = 0;
       goto end;
     }
+  } else {
+    *drain_out = datalen;
+    res = -1;
   }
 
   end:
@@ -648,8 +654,8 @@ parse_socks(const char *data, size_t datalen, socks_request_t *req,
 
   socksver = *data;
 
-  if ((socksver == 5 && req->socks_version != 5) ||
-      socksver == 4) {
+  if (socksver == 5 || socksver == 4 ||
+      socksver == 1) { // XXX: RFC 1929
     *want_length_out = 128; // TODO remove this arg later
     return handle_socks_message((const uint8_t *)data, datalen, req,
                                 log_sockstype, safe_socks, drain_out);
