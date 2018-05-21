@@ -464,7 +464,6 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
     res = 1;
     goto end;
   } else if (socks_version == 5) {
-    size_t n_drain = 0;
     if (datalen < 2) { /* version and another byte */
       res = 0;
       goto end;
@@ -494,7 +493,7 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
                                                       datalen,
                                                       &have_user_pass,
                                                       &have_no_auth,
-                                                      &n_drain);
+                                                      drain_out);
 
       if (parse_status != 1) {
         res = parse_status;
