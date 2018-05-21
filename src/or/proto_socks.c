@@ -433,6 +433,9 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
 
   uint8_t socks_version = (uint8_t)raw_data[0];
 
+  if (socks_version == 1)
+    socks_version = 5; // SOCKS5 username/pass subnegotiation
+
   if (socks_version == 4) {
     if (datalen < SOCKS4_NETWORK_LEN) {
       res = 0;
@@ -466,8 +469,8 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
       res = 0;
       goto end;
     }
-
-    if ((!req->got_auth && raw_data[1] == 1) ||
+    /* RFC1929 SOCKS5 username/password subnegotiation. */
+    if ((!req->got_auth && raw_data[0] == 1) ||
         req->auth_type == SOCKS_USER_PASS) {
       int parse_status = parse_socks5_userpass_auth(raw_data, req, datalen,
                                                     drain_out);
