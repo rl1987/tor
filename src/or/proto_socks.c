@@ -457,11 +457,12 @@ parse_socks5_client_request(const uint8_t *raw_data, socks_request_t *req,
   req->port = socks5_client_request_get_dest_port(trunnel_req);
 
   uint8_t atype = socks5_client_request_get_atype(trunnel_req);
+  req->socks5_atyp = atype;
 
   switch (atype) {
     case 1: {
       uint32_t ipv4 = socks5_client_request_get_dest_addr_ipv4(trunnel_req);
-      tor_addr_from_ipv4n(&destaddr, ipv4);
+      tor_addr_from_ipv4h(&destaddr, ipv4);
 
       tor_addr_to_str(req->address, &destaddr, sizeof(req->address), 1);
     } break;
@@ -528,8 +529,7 @@ process_socks5_client_request(socks_request_t *req,
     goto end;;
   }
 
-  if (string_is_valid_ipv4_address(req->address) ||
-      string_is_valid_ipv6_address(req->address)) {
+  if (req->socks5_atyp == 1 || req->socks5_atyp == 4) {
     if (req->command != SOCKS_COMMAND_RESOLVE_PTR &&
         !addressmap_have_mapping(req->address,0)) {
       log_unsafe_socks_warning(5, req->address, req->port, safe_socks);
