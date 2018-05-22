@@ -564,12 +564,6 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen,
 
   uint8_t socks_version = (uint8_t)raw_data[0];
 
-  printf("handle_socks_message: ");
-  for (size_t i = 0; i < datalen; i++) {
-    printf("%02x ", raw_data[i]);
-  }
-  printf("\n");
-
   if (socks_version == 1)
     socks_version = 5; // SOCKS5 username/pass subnegotiation
 
