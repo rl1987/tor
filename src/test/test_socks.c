@@ -1036,7 +1036,7 @@ struct testcase_t socks_tests[] = {
   SOCKSENT(5_malformed_commands),
   SOCKSENT(5_bad_arguments),
 
-  //SOCKSENT(truncated),
+  SOCKSENT(truncated),
 
   SOCKSENT(wrong_protocol),
 
