@@ -481,7 +481,6 @@ parse_socks5_client_request(const uint8_t *raw_data, socks_request_t *req,
     } break;
     default: {
       res = -1;
-      goto end;
     } break;
   }
 
@@ -547,9 +546,15 @@ static int
 handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *req,
                      int log_sockstype, int safe_socks, size_t *drain_out)
 {
-  int res = 0;
+  int res = 1;
 
   uint8_t socks_version = (uint8_t)raw_data[0];
+
+  printf("handle_socks_message: ");
+  for (size_t i = 0; i < datalen; i++) {
+    printf("%02x ", raw_data[i]);
+  }
+  printf("\n");
 
   if (socks_version == 1)
     socks_version = 5; // SOCKS5 username/pass subnegotiation
@@ -587,8 +592,8 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
       goto end;
     }
     /* RFC1929 SOCKS5 username/password subnegotiation. */
-    if ((!req->got_auth && raw_data[0] == 1) ||
-        req->auth_type == SOCKS_USER_PASS) {
+    if (!req->got_auth && (raw_data[0] == 1 ||
+        req->auth_type == SOCKS_USER_PASS)) {
       int parse_status = parse_socks5_userpass_auth(raw_data, req, datalen,
                                                     drain_out);
 
@@ -634,9 +639,7 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
       int parse_status = parse_socks5_client_request(raw_data, req,
                                                      datalen, drain_out);
       if (parse_status != 1) {
-        printf("Parse error: %d\n", parse_status);
         socks_request_set_socks5_error(req, SOCKS5_GENERAL_ERROR);
-
         res = parse_status;
         goto end;
       }
@@ -646,14 +649,10 @@ handle_socks_message(const uint8_t *raw_data, size_t datalen, socks_request_t *r
                                                          safe_socks);
 
       if (process_status != 1) {
-        printf("Process status: %d\n", process_status);
         res = process_status;
         goto end;
       }
     }
-
-    res = 1;
-    goto end;
   } else {
     *drain_out = datalen;
     res = -1;
@@ -705,7 +704,8 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
 
   do {
     n_drain = 0;
-    buf_pullup(buf, want_length, &head, &datalen);
+    buf_pullup(buf, MAX(want_length, buf_datalen(buf)), 
+               &head, &datalen);
     tor_assert(head && datalen >= 2);
     want_length = 0;
 
@@ -716,8 +716,7 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
       buf_clear(buf);
     else if (n_drain > 0)
       buf_drain(buf, n_drain);
-  } while (res == 0 && head && want_length < buf_datalen(buf) &&
-           buf_datalen(buf) >= 2);
+  } while (res == 0 && head && buf_datalen(buf) >= 2);
 
   end:
   return res;
