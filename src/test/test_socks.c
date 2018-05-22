@@ -672,7 +672,6 @@ test_socks_5_bad_arguments(void *ptr)
   teardown_capture_of_logs();
 }
 
-#if 0
 /** check for correct behavior when the socks command has not arrived. */
 static void
 test_socks_truncated(void *ptr)
@@ -771,7 +770,6 @@ test_socks_truncated(void *ptr)
   done:
   ;
 }
-#endif
 
 static void
 test_socks_wrong_protocol(void *ptr)
@@ -1038,9 +1036,7 @@ struct testcase_t socks_tests[] = {
   SOCKSENT(5_malformed_commands),
   SOCKSENT(5_bad_arguments),
 
-#if 0
   SOCKSENT(truncated),
-#endif
 
   SOCKSENT(wrong_protocol),
 
