@@ -394,7 +394,8 @@ process_socks5_userpass_auth(socks_request_t *req)
 
   // XXX: do we want to support SOCKS5 clients that violate the RFCs
   // by sending username/password message before negotiating?
-  if (req->auth_type != SOCKS_USER_PASS) {
+  if (req->auth_type != SOCKS_USER_PASS &&
+      req->auth_type != SOCKS_NO_AUTH) {
     res = -1;
     goto end;
   }
