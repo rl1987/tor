@@ -496,6 +496,14 @@ process_socks5_client_request(socks_request_t *req,
 {
   int res = 1;
 
+  if (req->command != SOCKS_COMMAND_CONNECT &&
+      req->command != SOCKS_COMMAND_RESOLVE &&
+      req->command != SOCKS_COMMAND_RESOLVE_PTR) {
+    socks_request_set_socks5_error(req,SOCKS5_COMMAND_NOT_SUPPORTED);
+    res = -1;
+    goto end;
+  }
+
   if (req->command == SOCKS_COMMAND_RESOLVE_PTR &&
       !string_is_valid_ipv4_address(req->address) &&
       !string_is_valid_ipv6_address(req->address)) {
