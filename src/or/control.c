@@ -3428,7 +3428,6 @@ handle_control_getinfo(control_connection_t *conn, uint32_t len,
         }
       } SMARTLIST_FOREACH_END(n);
       connection_write_str_to_buf("\r\n", conn);
-      connection_write_str_to_buf("250 OK\r\n", conn);
 
       continue;
     }
