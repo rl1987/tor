@@ -89,6 +89,8 @@
 #include "crypto_s2k.h"
 #include "procmon.h"
 
+#include <unistd.h>
+
 /** Yield true iff <b>s</b> is the state of a control_connection_t that has
  * finished authentication and is accepting commands. */
 #define STATE_IS_OPEN(s) ((s) == CONTROL_CONN_STATE_OPEN)
@@ -3241,6 +3243,7 @@ static const getinfo_item_t getinfo_items[] = {
   ITEM("desc/download-enabled", dir,
        "Do we try to download router descriptors?"),
   ITEM("desc/all-recent-extrainfo-hack", dir, NULL), /* Hack. */
+  ITEM("md/all", dir, "All known microdescriptors."),
   PREFIX("md/id/", dir, "Microdescriptors by ID"),
   PREFIX("md/name/", dir, "Microdescriptors by name"),
   ITEM("md/download-enabled", dir,
@@ -3400,6 +3403,36 @@ handle_control_getinfo(control_connection_t *conn, uint32_t len,
                          SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
   SMARTLIST_FOREACH_BEGIN(questions, const char *, q) {
     const char *errmsg = NULL;
+
+    if (!strcmp(q, "md/all")) {
+      const smartlist_t *nodes = nodelist_get_all_nodes();
+      if (!nodes) {
+        errmsg = "Internal error";
+        goto done;
+      }
+
+      log_notice(LD_CONTROL, "Dumping microdescriptors for %d nodes "
+                             "to controller", smartlist_len(nodes));
+
+      connection_write_str_to_buf("250-md/all=", conn);
+
+      connection_write_str_to_buf("\r\n", conn);
+      SMARTLIST_FOREACH_BEGIN(nodes, node_t *, n) {
+        if (n->md && n->md->body) {
+          connection_printf_to_buf(conn, "%s", n->md->body);
+          if (connection_wants_to_flush(TO_CONN(conn))) {
+            connection_flush(TO_CONN(conn));
+            usleep(100000); // HACK to avoid overwhelming connection with
+                            // too much data at once. FIXME later.
+          }
+        }
+      } SMARTLIST_FOREACH_END(n);
+      connection_write_str_to_buf("\r\n", conn);
+      connection_write_str_to_buf("250 OK\r\n", conn);
+
+      continue;
+    }
+
     if (handle_getinfo_helper(conn, q, &ans, &errmsg) < 0) {
       if (!errmsg)
         errmsg = "Internal error";
