@@ -1,0 +1,14 @@
+NOTE: docker support is still very experimental. We do not recommend to use
+it in production.
+
+To build Tor Docker container:
+
+$ docker build --tag tor:latest .
+
+To run Tor inside container (default settings):
+
+$ docker run tor:latest
+
+Run Tor relay:
+
+$ docker run --net=host tor:latest -ORPort 0.0.0.0:9001
