@@ -1,12 +1,9 @@
 /* Copyright (c) 2007-2018, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-#include "orconfig.h"
-
 #include <stdio.h>
 #include <time.h>
 
-#include "or.h"
 #include "ed25519_cert.h"
 #include "crypto_format.h" // crypto_read_tagged_contents_from_file
 
@@ -55,6 +52,8 @@ main(int argc, char **argv)
   time_t expires_at = (time_t)cert->exp_field * 60 * 60;
 
   printf("Expires at: %s", ctime(&expires_at));
+
+  ed25519_cert_free(cert);
 
   return 0;
 }
