@@ -30,13 +30,11 @@ src_tools_tor_gencert_LDADD = src/common/libor.a src/common/libor-crypto.a \
 	@TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
 	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @TOR_LIB_USERENV@ @CURVE25519_LIBS@
 
-src_tools_tor_print_ed_signing_cert_SOURCES = src/tools/tor-print-ed-signing-cert.c \
-	src/trunnel/ed25519_cert.c \
-	src/ext/trunnel/trunnel.c \
-	src/trunnel/link_handshake.c
+src_tools_tor_print_ed_signing_cert_SOURCES = src/tools/tor-print-ed-signing-cert.c
 src_tools_tor_print_ed_signing_cert_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
 src_tools_tor_print_ed_signing_cert_LDADD = src/common/libor.a src/common/libor-crypto.a \
 	src/common/libor-ctime.a \
+	src/trunnel/libor-trunnel.a \
 	$(LIBKECCAK_TINY) \
 	$(LIBDONNA) \
 	$(rust_ldadd) \
