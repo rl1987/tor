@@ -20,7 +20,7 @@ def try_connecting_to_socksport():
 def wait_for_log(s):
     while True:
         l = tor_process.stdout.readline()
-        if s in l.decode('utf8'):
+        if s in l:
             return
 
 def pick_random_port():
@@ -53,7 +53,8 @@ tor_process = subprocess.Popen([tor_path,
                                '-SOCKSPort', '127.0.0.1:{}'.format(socks_port),
                                '-FetchServerDescriptors', '0'],
                                stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+                               stderr=subprocess.PIPE,
+                               universal_newlines=True)
 
 if tor_process == None:
     sys.exit('ERROR: running tor failed')
