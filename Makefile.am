@@ -30,6 +30,8 @@ else
 TESTING_TOR_BINARY=$(top_builddir)/src/app/tor$(EXEEXT)
 endif
 
+export TESTING_TOR_BINARY
+
 if USE_RUST
 ## this MUST be $(), otherwise am__DEPENDENCIES will not track it
 rust_ldadd=$(top_builddir)/$(TOR_RUST_LIB_PATH) \
