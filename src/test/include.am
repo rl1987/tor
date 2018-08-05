@@ -15,7 +15,21 @@ TESTS_ENVIRONMENT = \
 	chmod +x "$(abs_top_builddir)/link_rust.sh"; \
 	export RUSTFLAGS="-C linker=$(abs_top_builddir)/link_rust.sh";
 
-TESTSCRIPTS = \
+
+TESTSCRIPTS = 
+
+if USEPYTHON
+
+TESTSCRIPTS += src/test/test_rebind.sh
+TESTSCRIPTS += src/test/test_ntor.sh src/test/test_hs_ntor.sh src/test/test_bt.sh
+endif
+
+if USE_RUST
+TESTSCRIPTS += \
+	src/test/test_rust.sh
+endif
+
+TESTSCRIPTS += \
 	src/test/fuzz_static_testcases.sh \
 	src/test/test_zero_length_keys.sh \
 	src/test/test_workqueue_cancel.sh \
@@ -25,16 +39,6 @@ TESTSCRIPTS = \
 	src/test/test_workqueue_pipe2.sh \
 	src/test/test_workqueue_socketpair.sh \
 	src/test/test_switch_id.sh
-
-if USE_RUST
-TESTSCRIPTS += \
-	src/test/test_rust.sh
-endif
-
-if USEPYTHON
-TESTSCRIPTS += src/test/test_ntor.sh src/test/test_hs_ntor.sh src/test/test_bt.sh
-TESTSCRIPTS += src/test/test_rebind.sh
-endif
 
 TESTS += src/test/test src/test/test-slow src/test/test-memwipe \
 	src/test/test_workqueue \
