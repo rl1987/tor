@@ -31,6 +31,7 @@
 #include "feature/nodelist/node_st.h"
 #include "feature/nodelist/routerinfo_st.h"
 #include "feature/nodelist/routerstatus_st.h"
+#include "feature/nodelist/microdesc_st.h"
 
 /** Information about a configured bridge. Currently this just matches the
  * ones in the torrc file, but one day we may be able to learn about new
@@ -283,17 +284,81 @@ routerinfo_is_a_configured_bridge(const routerinfo_t *ri)
   return get_configured_bridge_by_routerinfo(ri) ? 1 : 0;
 }
 
+/**
+ * Find a bridge_info_t entry in bridge list matching <b>node</b>
+ * by identity digest or by address/port pair.
+ */
+static bridge_info_t *
+get_configured_bridge_at_node(const node_t *node)
+{
+  const char *digest;
+  tor_addr_t node_addr;
+  uint16_t node_port;
+
+  if (!bridge_list)
+    return NULL;
+
+  if (!node)
+    return NULL;
+
+  digest = node->identity;
+
+  SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, bridge)
+    {
+      if (digest && !tor_digest_is_zero(bridge->identity) &&
+          tor_memeq(bridge->identity, digest, DIGEST_LEN))
+        return bridge;
+
+      memset(&node_addr, 0, sizeof(node_addr));
+      node_port = 0;
+
+      sa_family_t addr_family = tor_addr_family(&bridge->addr);
+      if (BUG(!tor_addr_is_valid(&bridge->addr, 0)))
+        continue;
+
+      if (BUG(!tor_port_is_valid(bridge->port, 0)))
+        continue;
+
+      if (addr_family == AF_INET) {
+        if (node->ri != NULL) {
+          tor_addr_from_ipv4h(&node_addr, node->ri->addr);
+          node_port = node->ri->or_port;
+        } else if (node->rs != NULL) {
+          tor_addr_from_ipv4h(&node_addr, node->rs->addr);
+          node_port = node->rs->or_port;
+        }
+      } else if (addr_family == AF_INET6) {
+        if (node->ri != NULL) {
+          tor_addr_copy(&node_addr, &node->ri->ipv6_addr);
+          node_port = node->ri->ipv6_orport;
+        } else if (node->rs != NULL) {
+          tor_addr_copy(&node_addr, &node->rs->ipv6_addr);
+          node_port = node->rs->ipv6_orport;
+        } else if (node->md != NULL) {
+          tor_addr_copy(&node_addr, &node->rs->ipv6_addr);
+          node_port = node->md->ipv6_orport;
+        }
+      }
+
+      if (!tor_addr_is_valid(&node_addr, 0))
+        continue;
+
+      if (!tor_port_is_valid(node_port, 0))
+        continue;
+
+      if (tor_addr_compare(&bridge->addr, &node_addr, CMP_EXACT) == 0 &&
+          node_port == bridge->port)
+        return bridge;
+    }
+  SMARTLIST_FOREACH_END(bridge);
+  return NULL;
+}
+
 /** Return 1 if <b>node</b> is one of our configured bridges, else 0. */
 int
 node_is_a_configured_bridge(const node_t *node)
 {
-  int retval = 0;
-  smartlist_t *orports = node_get_all_orports(node);
-  retval = get_configured_bridge_by_orports_digest(node->identity,
-                                                   orports) != NULL;
-  SMARTLIST_FOREACH(orports, tor_addr_port_t *, p, tor_free(p));
-  smartlist_free(orports);
-  return retval;
+  return get_configured_bridge_at_node(node) != NULL;
 }
 
 /** We made a connection to a router at <b>addr</b>:<b>port</b>
