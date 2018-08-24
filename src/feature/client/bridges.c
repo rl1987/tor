@@ -305,9 +305,11 @@ get_configured_bridge_at_node(const node_t *node)
 
   SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, bridge)
     {
-      if (digest && !tor_digest_is_zero(bridge->identity) &&
-          tor_memeq(bridge->identity, digest, DIGEST_LEN))
+      if (!tor_digest_is_zero(bridge->identity) &&
+          tor_memeq(bridge->identity, digest, DIGEST_LEN)) {
+        printf("found bridge! %s %s\n", digest, bridge->identity);
         return bridge;
+      }
 
       memset(&node_addr, 0, sizeof(node_addr));
       node_port = 0;
@@ -320,24 +322,38 @@ get_configured_bridge_at_node(const node_t *node)
         continue;
 
       if (addr_family == AF_INET) {
+        uint32_t node_ipv4 = 0;
+
         if (node->ri != NULL) {
-          tor_addr_from_ipv4h(&node_addr, node->ri->addr);
+          node_ipv4 = node->ri->addr;
           node_port = node->ri->or_port;
         } else if (node->rs != NULL) {
-          tor_addr_from_ipv4h(&node_addr, node->rs->addr);
+          node_ipv4 = node->rs->addr;
           node_port = node->rs->or_port;
         }
+
+        if (tor_addr_port_is_valid_ipv4h(node_ipv4, node_port, 0))
+          tor_addr_from_ipv4h(&node_addr, node_ipv4);
+        else
+          continue;
       } else if (addr_family == AF_INET6) {
+        tor_addr_t *node_ipv6 = NULL;
+
         if (node->ri != NULL) {
-          tor_addr_copy(&node_addr, &node->ri->ipv6_addr);
+          node_ipv6 = &node->ri->ipv6_addr;
           node_port = node->ri->ipv6_orport;
         } else if (node->rs != NULL) {
-          tor_addr_copy(&node_addr, &node->rs->ipv6_addr);
+          node_ipv6 = &node->rs->ipv6_addr;
           node_port = node->rs->ipv6_orport;
         } else if (node->md != NULL) {
-          tor_addr_copy(&node_addr, &node->rs->ipv6_addr);
+          node_ipv6 = &node->md->ipv6_addr;
           node_port = node->md->ipv6_orport;
         }
+
+        if (node_ipv6 && tor_addr_port_is_valid(node_ipv6, node_port,0))
+          tor_addr_copy(&node_addr, node_ipv6);
+        else
+          continue;
       }
 
       if (!tor_addr_is_valid(&node_addr, 0))
@@ -354,10 +370,23 @@ get_configured_bridge_at_node(const node_t *node)
   return NULL;
 }
 
+static int
+node_is_a_configured_old(const node_t *node)
+{
+  int retval = 0;
+  smartlist_t *orports = node_get_all_orports(node);
+  retval = get_configured_bridge_by_orports_digest(node->identity,
+                                                   orports) != NULL;
+  SMARTLIST_FOREACH(orports, tor_addr_port_t *, p, tor_free(p));
+  smartlist_free(orports);
+  return retval;
+}
+
 /** Return 1 if <b>node</b> is one of our configured bridges, else 0. */
 int
 node_is_a_configured_bridge(const node_t *node)
 {
+  //return node_is_a_configured_old(node);
   return get_configured_bridge_at_node(node) != NULL;
 }
 
