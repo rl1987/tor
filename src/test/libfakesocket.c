@@ -31,10 +31,10 @@ connect(int socket, const struct sockaddr *address, socklen_t address_len)
 ssize_t
 send(int socket, const void *buffer, size_t length, int flags)
 {
-  const char *buf = (const char *)buffer;
+  const uint8_t *buf = (const uint8_t *)buffer;
 
   for (size_t i = 0; i < length; i++) {
-    char b = *(buf + i);
+    uint8_t b = *(buf + i);
     fprintf(stderr, "%02X ", b);
   }
 
