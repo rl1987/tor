@@ -18,6 +18,8 @@ int
 connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
   char ipstr[INET6_ADDRSTRLEN];
+  (void)socket;
+  (void)address_len;
   memset(ipstr, 0, sizeof(ipstr));
 
   if (address->sa_family == AF_INET) {
@@ -48,6 +50,8 @@ ssize_t
 send(int socket, const void *buffer, size_t length, int flags)
 {
   const uint8_t *buf = (const uint8_t *)buffer;
+  (void)socket;
+  (void)flags;
 
   for (size_t i = 0; i < length; i++) {
     uint8_t b = *(buf + i);
@@ -69,6 +73,8 @@ ssize_t
 recv(int socket, void *buffer, size_t length, int flags)
 {
   char *buf = (char *)buffer;
+  (void)socket;
+  (void)flags;
 
   for (size_t i = 0; i < length; i++) {
     unsigned int in = 0;
