@@ -55,7 +55,7 @@ send(int socket, const void *buffer, size_t length, int flags)
 
   for (size_t i = 0; i < length; i++) {
     uint8_t b = *(buf + i);
-    fprintf(stderr, "%02X ", b);
+    fprintf(stderr, "%02x ", b);
   }
 
   fprintf(stderr, "\n");
@@ -78,7 +78,7 @@ recv(int socket, void *buffer, size_t length, int flags)
 
   for (size_t i = 0; i < length; i++) {
     unsigned int in = 0;
-    scanf("%02X", &in);
+    scanf("%02x", &in);
     if (in < 0xff) {
       uint8_t in8 = (uint8_t)in;
       *(buf + i) = in8;
