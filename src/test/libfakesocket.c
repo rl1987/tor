@@ -1,3 +1,6 @@
+/* Copyright (c) 2018, The Tor Project, Inc. */
+/* See LICENSE for licensing information */
+
 #include <stdio.h>
 
 #include <sys/types.h>
@@ -5,6 +8,12 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+/**
+ * Print a string representation of <b>address</b> to stderr
+ * and return 0.
+ *
+ * This function is meant for replacing connect() syscall.
+ */
 int
 connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
@@ -28,6 +37,13 @@ connect(int socket, const struct sockaddr *address, socklen_t address_len)
   return 0;
 }
 
+/**
+ * Print a space-separated hex representation of data in
+ * <b>buffer</b> of size <b>length</b> to stderr.
+ * Return <b>length</b>.
+ *
+ * This function is meant for replacing send() syscall.
+ */
 ssize_t
 send(int socket, const void *buffer, size_t length, int flags)
 {
@@ -43,12 +59,16 @@ send(int socket, const void *buffer, size_t length, int flags)
   return length;
 }
 
+/**
+ * Read <b>length</b> of octets from stdin and put them
+ * into <b>buffer</b>.
+ *
+ * This function is meant for replacing recv() syscall.
+ */
 ssize_t
 recv(int socket, void *buffer, size_t length, int flags)
 {
   char *buf = (char *)buffer;
-
-  fprintf(stderr, "recv %zu\n", length);
 
   for (size_t i = 0; i < length; i++) {
     unsigned int in = 0;
@@ -58,8 +78,6 @@ recv(int socket, void *buffer, size_t length, int flags)
       *(buf + i) = in8;
     }
   }
-
-  fprintf(stderr, "!\n");
 
   return length;
 }
