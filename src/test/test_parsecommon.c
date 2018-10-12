@@ -16,6 +16,7 @@ test_parsecommon_tokenize_string_null(void *arg)
 {
 
   memarea_t *area = memarea_new();
+  smartlist_t *tokens = smartlist_new();
 
   (void)arg;
 
@@ -24,12 +25,13 @@ test_parsecommon_tokenize_string_null(void *arg)
   int retval =
   tokenize_string(area, str_with_null,
                   str_with_null + 3,
-                  NULL, NULL, 0);
+                  tokens, NULL, 0);
 
   tt_int_op(retval, OP_EQ, -1);
 
  done:
   memarea_drop_all(area);
+  smartlist_free(tokens);
   return;
 }
 
