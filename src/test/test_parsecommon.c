@@ -99,7 +99,8 @@ test_parsecommon_get_next_token_parse_keys(void *arg)
   const char **s = (const char **)&str;
   const char decoded[128];
 
-  base64_decode((char *)decoded, sizeof(decoded), base64_key, strlen(base64_key));
+  base64_decode((char *)decoded, sizeof(decoded), base64_key,
+                strlen(base64_key));
 
   token_rule_t rule = T1("onion-key", R_IPO_ONION_KEY, NO_ARGS, NEED_KEY_1024);
 
