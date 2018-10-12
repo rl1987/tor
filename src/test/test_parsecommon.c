@@ -9,8 +9,6 @@
 #include "feature/nodelist/parsecommon.h"
 #include "test/log_test_helpers.h"
 
-#define DISABLE_MEMORY_SENTINELS 1
-
 static void
 test_parsecommon_tokenize_string_null(void *arg)
 {
