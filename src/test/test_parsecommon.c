@@ -128,7 +128,7 @@ test_parsecommon_get_next_token_parse_keys(void *arg)
     "3BBvBQ39TuPQ1zWX4tb7zjMlY83HTFP3Sriq71tP/1QWoL2SUl56B2lp8E6vB/C3\n"
     "wsMK4SCNprHRYAd7VZ0CQDKn6Zhd11P94PLs0msybFEh1VXr6CEW/BrxBgbL4ls6\n"
     "dbX5XO0z4Ra8gYXgObgimhyMDYO98Idt5+Z3HIdyrSc=\n";
-   
+
   const char decoded2[128];
   base64_decode((char *)decoded2, sizeof(decoded2), base64_skey,
                 strlen(base64_skey));
@@ -141,7 +141,8 @@ test_parsecommon_get_next_token_parse_keys(void *arg)
   const char *end2 = str2 + strlen(str2);
   const char **s2 = (const char **)&str2;
 
-  token_rule_t rule2 = T01("client-key", C_CLIENT_KEY, NO_ARGS, NEED_SKEY_1024);
+  token_rule_t rule2 = T01("client-key", C_CLIENT_KEY, NO_ARGS,
+                           NEED_SKEY_1024);
 
   directory_token_t *token2 = get_next_token(area, s2, end2, &rule2);
 
