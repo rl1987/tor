@@ -338,7 +338,8 @@ test_parsecommon_get_next_token_err_tag_mismatch(void *arg)
   directory_token_t *token = get_next_token(area, s, end, &rule);
 
   tt_int_op(token->tp, OP_EQ, ERR_);
-  tt_str_op(token->error, OP_EQ, "Malformed object: mismatched end tag SIGNATURE");
+  tt_str_op(token->error, OP_EQ,
+            "Malformed object: mismatched end tag SIGNATURE");
 
  done:
   memarea_drop_all(area);
