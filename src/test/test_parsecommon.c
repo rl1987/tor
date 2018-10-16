@@ -225,7 +225,6 @@ test_parsecommon_tokenize_string_no_annotations(void *arg)
   memarea_drop_all(area);
   smartlist_free(tokens);
   return;
-
 }
 
 static void
