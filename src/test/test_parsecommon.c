@@ -93,7 +93,7 @@ test_parsecommon_tokenize_string_min_cnt(void *arg)
           END_OF_TABLE,
   };
 
-  // Misssing "uptime"
+  // Missing "uptime"
   char *str = tor_strdup("uptime 1024\nhibernating 0\n");
 
   int retval =
