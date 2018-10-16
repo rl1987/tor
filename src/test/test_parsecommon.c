@@ -49,7 +49,7 @@ test_parsecommon_tokenize_string_multiple_lines(void *arg)
           END_OF_TABLE,
   };
 
-  const char *str = tor_strdup(
+  char *str = tor_strdup(
           "hibernating 0\nuptime 1024\n"
           "published 2018-10-15 10:00:00\n");
 
