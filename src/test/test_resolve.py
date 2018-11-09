@@ -101,6 +101,9 @@ class Testcase:
                                           stderr=subprocess.PIPE,
                                           stdin=subprocess.PIPE)
 
+        err = child_process.stderr.readline().decode('utf8')
+        assert_eq(err, "")
+
         l = child_process.stdout.readline().decode('utf8')
 
         child_process.wait()
