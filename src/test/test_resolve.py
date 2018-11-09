@@ -63,6 +63,7 @@ def mock_server(expect_send1, recv1, expect_send2, recv2):
     s.listen(5)
 
     (clientsocket, addr) = s.accept()
+    print('Socket accepted')
 
     assert recv_n(clientsocket, len(expect_send1_bin)) == expect_send1_bin
 
