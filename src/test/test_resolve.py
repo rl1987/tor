@@ -13,6 +13,11 @@ def fail(msg):
     print('FAIL')
     sys.exit(msg)
 
+
+def assert_eq(a, b):
+    if a != b:
+        fail("\"" + a + "\" != \"" + b + "\"")
+
 def pick_random_port():
     port = 0
     random.seed()
@@ -98,7 +103,7 @@ class Testcase:
 
         l = child_process.stdout.readline().decode('utf8')
 
-        assert l == self.expect_final_stdout
+        assert_eq(l, self.expect_final_stdout)
 
 if sys.hexversion < 0x02070000:
     fail("ERROR: unsupported Python version (should be >= 2.7)")
