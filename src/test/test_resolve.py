@@ -117,6 +117,8 @@ if sys.hexversion < 0x02070000:
 if sys.hexversion > 0x03000000 and sys.hexversion < 0x03010000:
     fail("ERROR: unsupported Python3 version (should be >= 3.1)")
 
+print("Running on Python " + sys.version)
+
 tor_resolve_path = sys.argv[1]
 
 socks_port = pick_random_port()
