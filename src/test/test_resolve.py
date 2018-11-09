@@ -103,6 +103,9 @@ class Testcase:
 
         l = child_process.stdout.readline().decode('utf8')
 
+        child_process.wait()
+        assert child_process.returncode == 0
+
         assert_eq(l, self.expect_final_stdout)
 
 if sys.hexversion < 0x02070000:
