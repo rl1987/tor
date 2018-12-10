@@ -9,6 +9,12 @@ import subprocess
 import sys
 import threading
 
+def assert_eq(expecting, got):
+    if expecting != got:
+        print("EXPECTING: " + expecting)
+        print("GOT: " + got)
+        sys.exit("FAIL")
+
 def fail(msg):
     print('FAIL')
     sys.exit(msg)
@@ -98,7 +104,7 @@ class Testcase:
 
         l = child_process.stdout.readline().decode('utf8')
 
-        assert l == self.expect_final_stdout
+        assert_eq(self.expect_final_stdout, l)
 
 if sys.hexversion < 0x02070000:
     fail("ERROR: unsupported Python version (should be >= 2.7)")
