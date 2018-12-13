@@ -1453,8 +1453,7 @@ AUTHENTICATE_FAIL(tooshort,
                   require_failure_message = "Cell was way too short";
                   d->cell->payload_len = 3)
 AUTHENTICATE_FAIL(badtype,
-                  require_failure_message = "Authenticator type was not "
-                    "recognized";
+                  require_failure_message = "Failed to parse";
                   d->cell->payload[0] = 0xff)
 AUTHENTICATE_FAIL(truncated_1,
                   require_failure_message = "Authenticator was truncated";
@@ -1463,7 +1462,7 @@ AUTHENTICATE_FAIL(truncated_2,
                   require_failure_message = "Authenticator was truncated";
                   d->cell->payload[3]++)
 AUTHENTICATE_FAIL(tooshort_1,
-                  require_failure_message = "Authenticator was too short";
+                  require_failure_message = "Authenticator was truncated";
                   tt_int_op(d->cell->payload_len, OP_GE, 260);
                   d->cell->payload[2] -= 1;
                   d->cell->payload_len -= 256;)

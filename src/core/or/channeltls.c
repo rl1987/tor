@@ -2260,9 +2260,11 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
 {
   var_cell_t *expected_cell = NULL;
   const uint8_t *auth;
+  authenticate_cell_t *parsed_auth_cell = NULL;
   int authlen;
   int authtype;
   int bodylen;
+  const auth_ctx_t auth_ctx = { .is_ed = 1 }; // XXX
 
   tor_assert(cell);
   tor_assert(chan);
@@ -2276,6 +2278,7 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
            chan->conn->base_.port, (s));                        \
     connection_or_close_for_error(chan->conn, 0);               \
     var_cell_free(expected_cell);                               \
+    authenticate_cell_free(parsed_auth_cell);                   \
     return;                                                     \
   } while (0)
 
@@ -2299,19 +2302,22 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
     ERR("Cell was way too short");
 
   auth = cell->payload;
-  {
-    uint16_t type = ntohs(get_uint16(auth));
-    uint16_t len = ntohs(get_uint16(auth+2));
-    if (4 + len > cell->payload_len)
-      ERR("Authenticator was truncated");
 
-    if (! authchallenge_type_is_supported(type))
+  ssize_t parsed = authenticate_cell_parse(&parsed_auth_cell, auth,
+                                           cell->payload_len, &auth_ctx);
+
+  if (parsed == -1)
+    ERR("Failed to parse");
+  else if (parsed == -2)
+    ERR("Authenticator was truncated");
+
+  authtype = authenticate_cell_get_type(parsed_auth_cell);
+  authlen = authenticate_cell_get_len(parsed_auth_cell);
+
+  if (!authchallenge_type_is_supported(authtype))
       ERR("Authenticator type was not recognized");
-    authtype = type;
 
-    auth += 4;
-    authlen = len;
-  }
+  auth += 4;
 
   if (authlen < V3_AUTH_BODY_LEN + 1)
     ERR("Authenticator was too short");
@@ -2456,6 +2462,7 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   }
 
   var_cell_free(expected_cell);
+  authenticate_cell_free(parsed_auth_cell);
 
 #undef ERR
 }
