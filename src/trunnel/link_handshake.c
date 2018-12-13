@@ -2791,3 +2791,348 @@ certs_cell_parse(certs_cell_t **output, const uint8_t *input, const size_t len_i
   }
   return result;
 }
+authenticate_cell_t *
+authenticate_cell_new(void)
+{
+  authenticate_cell_t *val = trunnel_calloc(1, sizeof(authenticate_cell_t));
+  if (NULL == val)
+    return NULL;
+  val->type = 1;
+  return val;
+}
+
+/** Release all storage held inside 'obj', but do not free 'obj'.
+ */
+static void
+authenticate_cell_clear(authenticate_cell_t *obj)
+{
+  (void) obj;
+  auth1_free(obj->payload_auth1);
+  obj->payload_auth1 = NULL;
+  auth3_free(obj->payload_auth3);
+  obj->payload_auth3 = NULL;
+}
+
+void
+authenticate_cell_free(authenticate_cell_t *obj)
+{
+  if (obj == NULL)
+    return;
+  authenticate_cell_clear(obj);
+  trunnel_memwipe(obj, sizeof(authenticate_cell_t));
+  trunnel_free_(obj);
+}
+
+uint16_t
+authenticate_cell_get_type(const authenticate_cell_t *inp)
+{
+  return inp->type;
+}
+int
+authenticate_cell_set_type(authenticate_cell_t *inp, uint16_t val)
+{
+  if (! ((val == 1 || val == 3))) {
+     TRUNNEL_SET_ERROR_CODE(inp);
+     return -1;
+  }
+  inp->type = val;
+  return 0;
+}
+uint16_t
+authenticate_cell_get_len(const authenticate_cell_t *inp)
+{
+  return inp->len;
+}
+int
+authenticate_cell_set_len(authenticate_cell_t *inp, uint16_t val)
+{
+  inp->len = val;
+  return 0;
+}
+struct auth1_st *
+authenticate_cell_get_payload_auth1(authenticate_cell_t *inp)
+{
+  return inp->payload_auth1;
+}
+const struct auth1_st *
+authenticate_cell_getconst_payload_auth1(const authenticate_cell_t *inp)
+{
+  return authenticate_cell_get_payload_auth1((authenticate_cell_t*) inp);
+}
+int
+authenticate_cell_set_payload_auth1(authenticate_cell_t *inp, struct auth1_st *val)
+{
+  if (inp->payload_auth1 && inp->payload_auth1 != val)
+    auth1_free(inp->payload_auth1);
+  return authenticate_cell_set0_payload_auth1(inp, val);
+}
+int
+authenticate_cell_set0_payload_auth1(authenticate_cell_t *inp, struct auth1_st *val)
+{
+  inp->payload_auth1 = val;
+  return 0;
+}
+struct auth3_st *
+authenticate_cell_get_payload_auth3(authenticate_cell_t *inp)
+{
+  return inp->payload_auth3;
+}
+const struct auth3_st *
+authenticate_cell_getconst_payload_auth3(const authenticate_cell_t *inp)
+{
+  return authenticate_cell_get_payload_auth3((authenticate_cell_t*) inp);
+}
+int
+authenticate_cell_set_payload_auth3(authenticate_cell_t *inp, struct auth3_st *val)
+{
+  if (inp->payload_auth3 && inp->payload_auth3 != val)
+    auth3_free(inp->payload_auth3);
+  return authenticate_cell_set0_payload_auth3(inp, val);
+}
+int
+authenticate_cell_set0_payload_auth3(authenticate_cell_t *inp, struct auth3_st *val)
+{
+  inp->payload_auth3 = val;
+  return 0;
+}
+const char *
+authenticate_cell_check(const authenticate_cell_t *obj, const auth_ctx_t *auth_ctx_ctx)
+{
+  if (obj == NULL)
+    return "Object was NULL";
+  if (obj->trunnel_error_code_)
+    return "A set function failed on this object";
+  if (auth_ctx_ctx == NULL)
+    return "Context was NULL";
+  if (! (obj->type == 1 || obj->type == 3))
+    return "Integer out of bounds";
+  switch (obj->type) {
+
+    case 1:
+      {
+        const char *msg;
+        if (NULL != (msg = auth1_check(obj->payload_auth1, auth_ctx_ctx)))
+          return msg;
+      }
+      break;
+
+    case 3:
+      {
+        const char *msg;
+        if (NULL != (msg = auth3_check(obj->payload_auth3)))
+          return msg;
+      }
+      break;
+
+    default:
+        return "Bad tag for union";
+      break;
+  }
+  return NULL;
+}
+
+ssize_t
+authenticate_cell_encoded_len(const authenticate_cell_t *obj, const auth_ctx_t *auth_ctx_ctx)
+{
+  ssize_t result = 0;
+
+  if (NULL != authenticate_cell_check(obj, auth_ctx_ctx))
+     return -1;
+
+
+  /* Length of u16 type IN [1, 3] */
+  result += 2;
+
+  /* Length of u16 len */
+  result += 2;
+  switch (obj->type) {
+
+    case 1:
+
+      /* Length of struct auth1 payload_auth1 */
+      result += auth1_encoded_len(obj->payload_auth1, auth_ctx_ctx);
+      break;
+
+    case 3:
+
+      /* Length of struct auth3 payload_auth3 */
+      result += auth3_encoded_len(obj->payload_auth3);
+      break;
+
+    default:
+      trunnel_assert(0);
+      break;
+  }
+  return result;
+}
+int
+authenticate_cell_clear_errors(authenticate_cell_t *obj)
+{
+  int r = obj->trunnel_error_code_;
+  obj->trunnel_error_code_ = 0;
+  return r;
+}
+ssize_t
+authenticate_cell_encode(uint8_t *output, const size_t avail, const authenticate_cell_t *obj, const auth_ctx_t *auth_ctx_ctx)
+{
+  ssize_t result = 0;
+  size_t written = 0;
+  uint8_t *ptr = output;
+  const char *msg;
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  const ssize_t encoded_len = authenticate_cell_encoded_len(obj, auth_ctx_ctx);
+#endif
+
+  if (NULL != (msg = authenticate_cell_check(obj, auth_ctx_ctx)))
+    goto check_failed;
+
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  trunnel_assert(encoded_len >= 0);
+#endif
+
+  /* Encode u16 type IN [1, 3] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 2)
+    goto truncated;
+  trunnel_set_uint16(ptr, trunnel_htons(obj->type));
+  written += 2; ptr += 2;
+
+  /* Encode u16 len */
+  trunnel_assert(written <= avail);
+  if (avail - written < 2)
+    goto truncated;
+  trunnel_set_uint16(ptr, trunnel_htons(obj->len));
+  written += 2; ptr += 2;
+
+  /* Encode union payload[type] */
+  trunnel_assert(written <= avail);
+  switch (obj->type) {
+
+    case 1:
+
+      /* Encode struct auth1 payload_auth1 */
+      trunnel_assert(written <= avail);
+      result = auth1_encode(ptr, avail - written, obj->payload_auth1, auth_ctx_ctx);
+      if (result < 0)
+        goto fail; /* XXXXXXX !*/
+      written += result; ptr += result;
+      break;
+
+    case 3:
+
+      /* Encode struct auth3 payload_auth3 */
+      trunnel_assert(written <= avail);
+      result = auth3_encode(ptr, avail - written, obj->payload_auth3);
+      if (result < 0)
+        goto fail; /* XXXXXXX !*/
+      written += result; ptr += result;
+      break;
+
+    default:
+      trunnel_assert(0);
+      break;
+  }
+
+
+  trunnel_assert(ptr == output + written);
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  {
+    trunnel_assert(encoded_len >= 0);
+    trunnel_assert((size_t)encoded_len == written);
+  }
+
+#endif
+
+  return written;
+
+ truncated:
+  result = -2;
+  goto fail;
+ check_failed:
+  (void)msg;
+  result = -1;
+  goto fail;
+ fail:
+  trunnel_assert(result < 0);
+  return result;
+}
+
+/** As authenticate_cell_parse(), but do not allocate the output
+ * object.
+ */
+static ssize_t
+authenticate_cell_parse_into(authenticate_cell_t *obj, const uint8_t *input, const size_t len_in, const auth_ctx_t *auth_ctx_ctx)
+{
+  const uint8_t *ptr = input;
+  size_t remaining = len_in;
+  ssize_t result = 0;
+  (void)result;
+  if (auth_ctx_ctx == NULL)
+    return -1;
+
+  /* Parse u16 type IN [1, 3] */
+  CHECK_REMAINING(2, truncated);
+  obj->type = trunnel_ntohs(trunnel_get_uint16(ptr));
+  remaining -= 2; ptr += 2;
+  if (! (obj->type == 1 || obj->type == 3))
+    goto fail;
+
+  /* Parse u16 len */
+  CHECK_REMAINING(2, truncated);
+  obj->len = trunnel_ntohs(trunnel_get_uint16(ptr));
+  remaining -= 2; ptr += 2;
+
+  /* Parse union payload[type] */
+  switch (obj->type) {
+
+    case 1:
+
+      /* Parse struct auth1 payload_auth1 */
+      result = auth1_parse(&obj->payload_auth1, ptr, remaining, auth_ctx_ctx);
+      if (result < 0)
+        goto relay_fail;
+      trunnel_assert((size_t)result <= remaining);
+      remaining -= result; ptr += result;
+      break;
+
+    case 3:
+
+      /* Parse struct auth3 payload_auth3 */
+      result = auth3_parse(&obj->payload_auth3, ptr, remaining);
+      if (result < 0)
+        goto relay_fail;
+      trunnel_assert((size_t)result <= remaining);
+      remaining -= result; ptr += result;
+      break;
+
+    default:
+      goto fail;
+      break;
+  }
+  trunnel_assert(ptr + remaining == input + len_in);
+  return len_in - remaining;
+
+ truncated:
+  return -2;
+ relay_fail:
+  trunnel_assert(result < 0);
+  return result;
+ fail:
+  result = -1;
+  return result;
+}
+
+ssize_t
+authenticate_cell_parse(authenticate_cell_t **output, const uint8_t *input, const size_t len_in, const auth_ctx_t *auth_ctx_ctx)
+{
+  ssize_t result;
+  *output = authenticate_cell_new();
+  if (NULL == *output)
+    return -1;
+  result = authenticate_cell_parse_into(*output, input, len_in, auth_ctx_ctx);
+  if (result < 0) {
+    authenticate_cell_free(*output);
+    *output = NULL;
+  }
+  return result;
+}

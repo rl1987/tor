@@ -97,6 +97,16 @@ struct certs_cell_st {
 };
 #endif
 typedef struct certs_cell_st certs_cell_t;
+#if !defined(TRUNNEL_OPAQUE) && !defined(TRUNNEL_OPAQUE_AUTHENTICATE_CELL)
+struct authenticate_cell_st {
+  uint16_t type;
+  uint16_t len;
+  struct auth1_st *payload_auth1;
+  struct auth3_st *payload_auth3;
+  uint8_t trunnel_error_code_;
+};
+#endif
+typedef struct authenticate_cell_st authenticate_cell_t;
 /** Return a newly allocated auth3 with all elements set to zero.
  */
 auth3_t *auth3_new(void);
@@ -1061,6 +1071,96 @@ const struct certs_cell_cert_st *  const  * certs_cell_getconstarray_certs(const
  * 'inp' on failure.
  */
 int certs_cell_setlen_certs(certs_cell_t *inp, size_t newlen);
+/** Return a newly allocated authenticate_cell with all elements set
+ * to zero.
+ */
+authenticate_cell_t *authenticate_cell_new(void);
+/** Release all storage held by the authenticate_cell in 'victim'. (Do
+ * nothing if 'victim' is NULL.)
+ */
+void authenticate_cell_free(authenticate_cell_t *victim);
+/** Try to parse a authenticate_cell from the buffer in 'input', using
+ * up to 'len_in' bytes from the input buffer. On success, return the
+ * number of bytes consumed and set *output to the newly allocated
+ * authenticate_cell_t. On failure, return -2 if the input appears
+ * truncated, and -1 if the input is otherwise invalid.
+ */
+ssize_t authenticate_cell_parse(authenticate_cell_t **output, const uint8_t *input, const size_t len_in, const auth_ctx_t *auth_ctx_ctx);
+/** Return the number of bytes we expect to need to encode the
+ * authenticate_cell in 'obj'. On failure, return a negative value.
+ * Note that this value may be an overestimate, and can even be an
+ * underestimate for certain unencodeable objects.
+ */
+ssize_t authenticate_cell_encoded_len(const authenticate_cell_t *obj, const auth_ctx_t *auth_ctx_ctx);
+/** Try to encode the authenticate_cell from 'input' into the buffer
+ * at 'output', using up to 'avail' bytes of the output buffer. On
+ * success, return the number of bytes used. On failure, return -2 if
+ * the buffer was not long enough, and -1 if the input was invalid.
+ */
+ssize_t authenticate_cell_encode(uint8_t *output, size_t avail, const authenticate_cell_t *input, const auth_ctx_t *auth_ctx_ctx);
+/** Check whether the internal state of the authenticate_cell in 'obj'
+ * is consistent. Return NULL if it is, and a short message if it is
+ * not.
+ */
+const char *authenticate_cell_check(const authenticate_cell_t *obj, const auth_ctx_t *auth_ctx_ctx);
+/** Clear any errors that were set on the object 'obj' by its setter
+ * functions. Return true iff errors were cleared.
+ */
+int authenticate_cell_clear_errors(authenticate_cell_t *obj);
+/** Return the value of the type field of the authenticate_cell_t in
+ * 'inp'
+ */
+uint16_t authenticate_cell_get_type(const authenticate_cell_t *inp);
+/** Set the value of the type field of the authenticate_cell_t in
+ * 'inp' to 'val'. Return 0 on success; return -1 and set the error
+ * code on 'inp' on failure.
+ */
+int authenticate_cell_set_type(authenticate_cell_t *inp, uint16_t val);
+/** Return the value of the len field of the authenticate_cell_t in
+ * 'inp'
+ */
+uint16_t authenticate_cell_get_len(const authenticate_cell_t *inp);
+/** Set the value of the len field of the authenticate_cell_t in 'inp'
+ * to 'val'. Return 0 on success; return -1 and set the error code on
+ * 'inp' on failure.
+ */
+int authenticate_cell_set_len(authenticate_cell_t *inp, uint16_t val);
+/** Return the value of the payload_auth1 field of the
+ * authenticate_cell_t in 'inp'
+ */
+struct auth1_st * authenticate_cell_get_payload_auth1(authenticate_cell_t *inp);
+/** As authenticate_cell_get_payload_auth1, but take and return a
+ * const pointer
+ */
+const struct auth1_st * authenticate_cell_getconst_payload_auth1(const authenticate_cell_t *inp);
+/** Set the value of the payload_auth1 field of the
+ * authenticate_cell_t in 'inp' to 'val'. Free the old value if any.
+ * Steals the referenceto 'val'.Return 0 on success; return -1 and set
+ * the error code on 'inp' on failure.
+ */
+int authenticate_cell_set_payload_auth1(authenticate_cell_t *inp, struct auth1_st *val);
+/** As authenticate_cell_set_payload_auth1, but does not free the
+ * previous value.
+ */
+int authenticate_cell_set0_payload_auth1(authenticate_cell_t *inp, struct auth1_st *val);
+/** Return the value of the payload_auth3 field of the
+ * authenticate_cell_t in 'inp'
+ */
+struct auth3_st * authenticate_cell_get_payload_auth3(authenticate_cell_t *inp);
+/** As authenticate_cell_get_payload_auth3, but take and return a
+ * const pointer
+ */
+const struct auth3_st * authenticate_cell_getconst_payload_auth3(const authenticate_cell_t *inp);
+/** Set the value of the payload_auth3 field of the
+ * authenticate_cell_t in 'inp' to 'val'. Free the old value if any.
+ * Steals the referenceto 'val'.Return 0 on success; return -1 and set
+ * the error code on 'inp' on failure.
+ */
+int authenticate_cell_set_payload_auth3(authenticate_cell_t *inp, struct auth3_st *val);
+/** As authenticate_cell_set_payload_auth3, but does not free the
+ * previous value.
+ */
+int authenticate_cell_set0_payload_auth3(authenticate_cell_t *inp, struct auth3_st *val);
 
 
 #endif
