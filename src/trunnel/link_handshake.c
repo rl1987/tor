@@ -28,6 +28,738 @@ int linkhandshake_deadcode_dummy__ = 0;
     }                                                            \
   } while (0)
 
+auth3_t *
+auth3_new(void)
+{
+  auth3_t *val = trunnel_calloc(1, sizeof(auth3_t));
+  if (NULL == val)
+    return NULL;
+  return val;
+}
+
+/** Release all storage held inside 'obj', but do not free 'obj'.
+ */
+static void
+auth3_clear(auth3_t *obj)
+{
+  (void) obj;
+  TRUNNEL_DYNARRAY_WIPE(&obj->sig);
+  TRUNNEL_DYNARRAY_CLEAR(&obj->sig);
+}
+
+void
+auth3_free(auth3_t *obj)
+{
+  if (obj == NULL)
+    return;
+  auth3_clear(obj);
+  trunnel_memwipe(obj, sizeof(auth3_t));
+  trunnel_free_(obj);
+}
+
+size_t
+auth3_getlen_type(const auth3_t *inp)
+{
+  (void)inp;  return 8;
+}
+
+uint8_t
+auth3_get_type(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 8);
+  return inp->type[idx];
+}
+
+uint8_t
+auth3_getconst_type(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_type((auth3_t*)inp, idx);
+}
+int
+auth3_set_type(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 8);
+  inp->type[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_type(auth3_t *inp)
+{
+  return inp->type;
+}
+const uint8_t  *
+auth3_getconstarray_type(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_type((auth3_t*)inp);
+}
+size_t
+auth3_getlen_cid(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_cid(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->cid[idx];
+}
+
+uint8_t
+auth3_getconst_cid(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_cid((auth3_t*)inp, idx);
+}
+int
+auth3_set_cid(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->cid[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_cid(auth3_t *inp)
+{
+  return inp->cid;
+}
+const uint8_t  *
+auth3_getconstarray_cid(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_cid((auth3_t*)inp);
+}
+size_t
+auth3_getlen_sid(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_sid(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->sid[idx];
+}
+
+uint8_t
+auth3_getconst_sid(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_sid((auth3_t*)inp, idx);
+}
+int
+auth3_set_sid(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->sid[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_sid(auth3_t *inp)
+{
+  return inp->sid;
+}
+const uint8_t  *
+auth3_getconstarray_sid(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_sid((auth3_t*)inp);
+}
+size_t
+auth3_getlen_cid_ed(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_cid_ed(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->cid_ed[idx];
+}
+
+uint8_t
+auth3_getconst_cid_ed(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_cid_ed((auth3_t*)inp, idx);
+}
+int
+auth3_set_cid_ed(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->cid_ed[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_cid_ed(auth3_t *inp)
+{
+  return inp->cid_ed;
+}
+const uint8_t  *
+auth3_getconstarray_cid_ed(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_cid_ed((auth3_t*)inp);
+}
+size_t
+auth3_getlen_sid_ed(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_sid_ed(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->sid_ed[idx];
+}
+
+uint8_t
+auth3_getconst_sid_ed(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_sid_ed((auth3_t*)inp, idx);
+}
+int
+auth3_set_sid_ed(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->sid_ed[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_sid_ed(auth3_t *inp)
+{
+  return inp->sid_ed;
+}
+const uint8_t  *
+auth3_getconstarray_sid_ed(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_sid_ed((auth3_t*)inp);
+}
+size_t
+auth3_getlen_slog(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_slog(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->slog[idx];
+}
+
+uint8_t
+auth3_getconst_slog(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_slog((auth3_t*)inp, idx);
+}
+int
+auth3_set_slog(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->slog[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_slog(auth3_t *inp)
+{
+  return inp->slog;
+}
+const uint8_t  *
+auth3_getconstarray_slog(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_slog((auth3_t*)inp);
+}
+size_t
+auth3_getlen_clog(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_clog(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->clog[idx];
+}
+
+uint8_t
+auth3_getconst_clog(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_clog((auth3_t*)inp, idx);
+}
+int
+auth3_set_clog(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->clog[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_clog(auth3_t *inp)
+{
+  return inp->clog;
+}
+const uint8_t  *
+auth3_getconstarray_clog(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_clog((auth3_t*)inp);
+}
+size_t
+auth3_getlen_scert(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_scert(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->scert[idx];
+}
+
+uint8_t
+auth3_getconst_scert(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_scert((auth3_t*)inp, idx);
+}
+int
+auth3_set_scert(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->scert[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_scert(auth3_t *inp)
+{
+  return inp->scert;
+}
+const uint8_t  *
+auth3_getconstarray_scert(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_scert((auth3_t*)inp);
+}
+size_t
+auth3_getlen_tlscerts(const auth3_t *inp)
+{
+  (void)inp;  return 32;
+}
+
+uint8_t
+auth3_get_tlscerts(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 32);
+  return inp->tlscerts[idx];
+}
+
+uint8_t
+auth3_getconst_tlscerts(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_tlscerts((auth3_t*)inp, idx);
+}
+int
+auth3_set_tlscerts(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 32);
+  inp->tlscerts[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_tlscerts(auth3_t *inp)
+{
+  return inp->tlscerts;
+}
+const uint8_t  *
+auth3_getconstarray_tlscerts(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_tlscerts((auth3_t*)inp);
+}
+const uint8_t *
+auth3_get_end_of_fixed_part(const auth3_t *inp)
+{
+  return inp->end_of_fixed_part;
+}
+size_t
+auth3_getlen_rand(const auth3_t *inp)
+{
+  (void)inp;  return 24;
+}
+
+uint8_t
+auth3_get_rand(auth3_t *inp, size_t idx)
+{
+  trunnel_assert(idx < 24);
+  return inp->rand[idx];
+}
+
+uint8_t
+auth3_getconst_rand(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_rand((auth3_t*)inp, idx);
+}
+int
+auth3_set_rand(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  trunnel_assert(idx < 24);
+  inp->rand[idx] = elt;
+  return 0;
+}
+
+uint8_t *
+auth3_getarray_rand(auth3_t *inp)
+{
+  return inp->rand;
+}
+const uint8_t  *
+auth3_getconstarray_rand(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_rand((auth3_t*)inp);
+}
+const uint8_t *
+auth3_get_end_of_signed(const auth3_t *inp)
+{
+  return inp->end_of_signed;
+}
+size_t
+auth3_getlen_sig(const auth3_t *inp)
+{
+  return TRUNNEL_DYNARRAY_LEN(&inp->sig);
+}
+
+uint8_t
+auth3_get_sig(auth3_t *inp, size_t idx)
+{
+  return TRUNNEL_DYNARRAY_GET(&inp->sig, idx);
+}
+
+uint8_t
+auth3_getconst_sig(const auth3_t *inp, size_t idx)
+{
+  return auth3_get_sig((auth3_t*)inp, idx);
+}
+int
+auth3_set_sig(auth3_t *inp, size_t idx, uint8_t elt)
+{
+  TRUNNEL_DYNARRAY_SET(&inp->sig, idx, elt);
+  return 0;
+}
+int
+auth3_add_sig(auth3_t *inp, uint8_t elt)
+{
+  TRUNNEL_DYNARRAY_ADD(uint8_t, &inp->sig, elt, {});
+  return 0;
+ trunnel_alloc_failed:
+  TRUNNEL_SET_ERROR_CODE(inp);
+  return -1;
+}
+
+uint8_t *
+auth3_getarray_sig(auth3_t *inp)
+{
+  return inp->sig.elts_;
+}
+const uint8_t  *
+auth3_getconstarray_sig(const auth3_t *inp)
+{
+  return (const uint8_t  *)auth3_getarray_sig((auth3_t*)inp);
+}
+int
+auth3_setlen_sig(auth3_t *inp, size_t newlen)
+{
+  uint8_t *newptr;
+  newptr = trunnel_dynarray_setlen(&inp->sig.allocated_,
+                 &inp->sig.n_, inp->sig.elts_, newlen,
+                 sizeof(inp->sig.elts_[0]), (trunnel_free_fn_t) NULL,
+                 &inp->trunnel_error_code_);
+  if (newlen != 0 && newptr == NULL)
+    goto trunnel_alloc_failed;
+  inp->sig.elts_ = newptr;
+  return 0;
+ trunnel_alloc_failed:
+  TRUNNEL_SET_ERROR_CODE(inp);
+  return -1;
+}
+const char *
+auth3_check(const auth3_t *obj)
+{
+  if (obj == NULL)
+    return "Object was NULL";
+  if (obj->trunnel_error_code_)
+    return "A set function failed on this object";
+  return NULL;
+}
+
+ssize_t
+auth3_encoded_len(const auth3_t *obj)
+{
+  ssize_t result = 0;
+
+  if (NULL != auth3_check(obj))
+     return -1;
+
+
+  /* Length of u8 type[8] */
+  result += 8;
+
+  /* Length of u8 cid[32] */
+  result += 32;
+
+  /* Length of u8 sid[32] */
+  result += 32;
+
+  /* Length of u8 cid_ed[32] */
+  result += 32;
+
+  /* Length of u8 sid_ed[32] */
+  result += 32;
+
+  /* Length of u8 slog[32] */
+  result += 32;
+
+  /* Length of u8 clog[32] */
+  result += 32;
+
+  /* Length of u8 scert[32] */
+  result += 32;
+
+  /* Length of u8 tlscerts[32] */
+  result += 32;
+
+  /* Length of u8 rand[24] */
+  result += 24;
+
+  /* Length of u8 sig[] */
+  result += TRUNNEL_DYNARRAY_LEN(&obj->sig);
+  return result;
+}
+int
+auth3_clear_errors(auth3_t *obj)
+{
+  int r = obj->trunnel_error_code_;
+  obj->trunnel_error_code_ = 0;
+  return r;
+}
+ssize_t
+auth3_encode(uint8_t *output, const size_t avail, const auth3_t *obj)
+{
+  ssize_t result = 0;
+  size_t written = 0;
+  uint8_t *ptr = output;
+  const char *msg;
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  const ssize_t encoded_len = auth3_encoded_len(obj);
+#endif
+
+  if (NULL != (msg = auth3_check(obj)))
+    goto check_failed;
+
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  trunnel_assert(encoded_len >= 0);
+#endif
+
+  /* Encode u8 type[8] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 8)
+    goto truncated;
+  memcpy(ptr, obj->type, 8);
+  written += 8; ptr += 8;
+
+  /* Encode u8 cid[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->cid, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 sid[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->sid, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 cid_ed[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->cid_ed, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 sid_ed[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->sid_ed, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 slog[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->slog, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 clog[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->clog, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 scert[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->scert, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 tlscerts[32] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 32)
+    goto truncated;
+  memcpy(ptr, obj->tlscerts, 32);
+  written += 32; ptr += 32;
+
+  /* Encode u8 rand[24] */
+  trunnel_assert(written <= avail);
+  if (avail - written < 24)
+    goto truncated;
+  memcpy(ptr, obj->rand, 24);
+  written += 24; ptr += 24;
+
+  /* Encode u8 sig[] */
+  {
+    size_t elt_len = TRUNNEL_DYNARRAY_LEN(&obj->sig);
+    trunnel_assert(written <= avail);
+    if (avail - written < elt_len)
+      goto truncated;
+    if (elt_len)
+      memcpy(ptr, obj->sig.elts_, elt_len);
+    written += elt_len; ptr += elt_len;
+  }
+
+
+  trunnel_assert(ptr == output + written);
+#ifdef TRUNNEL_CHECK_ENCODED_LEN
+  {
+    trunnel_assert(encoded_len >= 0);
+    trunnel_assert((size_t)encoded_len == written);
+  }
+
+#endif
+
+  return written;
+
+ truncated:
+  result = -2;
+  goto fail;
+ check_failed:
+  (void)msg;
+  result = -1;
+  goto fail;
+ fail:
+  trunnel_assert(result < 0);
+  return result;
+}
+
+/** As auth3_parse(), but do not allocate the output object.
+ */
+static ssize_t
+auth3_parse_into(auth3_t *obj, const uint8_t *input, const size_t len_in)
+{
+  const uint8_t *ptr = input;
+  size_t remaining = len_in;
+  ssize_t result = 0;
+  (void)result;
+
+  /* Parse u8 type[8] */
+  CHECK_REMAINING(8, truncated);
+  memcpy(obj->type, ptr, 8);
+  remaining -= 8; ptr += 8;
+
+  /* Parse u8 cid[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->cid, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 sid[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->sid, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 cid_ed[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->cid_ed, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 sid_ed[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->sid_ed, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 slog[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->slog, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 clog[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->clog, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 scert[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->scert, ptr, 32);
+  remaining -= 32; ptr += 32;
+
+  /* Parse u8 tlscerts[32] */
+  CHECK_REMAINING(32, truncated);
+  memcpy(obj->tlscerts, ptr, 32);
+  remaining -= 32; ptr += 32;
+  obj->end_of_fixed_part = ptr;
+
+  /* Parse u8 rand[24] */
+  CHECK_REMAINING(24, truncated);
+  memcpy(obj->rand, ptr, 24);
+  remaining -= 24; ptr += 24;
+  obj->end_of_signed = ptr;
+
+  /* Parse u8 sig[] */
+  TRUNNEL_DYNARRAY_EXPAND(uint8_t, &obj->sig, remaining, {});
+  obj->sig.n_ = remaining;
+  if (remaining)
+    memcpy(obj->sig.elts_, ptr, remaining);
+  ptr += remaining; remaining -= remaining;
+  trunnel_assert(ptr + remaining == input + len_in);
+  return len_in - remaining;
+
+ truncated:
+  return -2;
+ trunnel_alloc_failed:
+  return -1;
+}
+
+ssize_t
+auth3_parse(auth3_t **output, const uint8_t *input, const size_t len_in)
+{
+  ssize_t result;
+  *output = auth3_new();
+  if (NULL == *output)
+    return -1;
+  result = auth3_parse_into(*output, input, len_in);
+  if (result < 0) {
+    auth3_free(*output);
+    *output = NULL;
+  }
+  return result;
+}
 auth_challenge_cell_t *
 auth_challenge_cell_new(void)
 {

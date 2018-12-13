@@ -15,6 +15,25 @@
 #define CERTTYPE_ED_SIGN_LINK 5
 #define CERTTYPE_ED_SIGN_AUTH 6
 #define CERTTYPE_RSA1024_ID_EDID 7
+#if !defined(TRUNNEL_OPAQUE) && !defined(TRUNNEL_OPAQUE_AUTH3)
+struct auth3_st {
+  uint8_t type[8];
+  uint8_t cid[32];
+  uint8_t sid[32];
+  uint8_t cid_ed[32];
+  uint8_t sid_ed[32];
+  uint8_t slog[32];
+  uint8_t clog[32];
+  uint8_t scert[32];
+  uint8_t tlscerts[32];
+  const uint8_t *end_of_fixed_part;
+  uint8_t rand[24];
+  const uint8_t *end_of_signed;
+  TRUNNEL_DYNARRAY_HEAD(, uint8_t) sig;
+  uint8_t trunnel_error_code_;
+};
+#endif
+typedef struct auth3_st auth3_t;
 #if !defined(TRUNNEL_OPAQUE) && !defined(TRUNNEL_OPAQUE_AUTH_CHALLENGE_CELL)
 struct auth_challenge_cell_st {
   uint8_t challenge[32];
@@ -78,6 +97,291 @@ struct certs_cell_st {
 };
 #endif
 typedef struct certs_cell_st certs_cell_t;
+/** Return a newly allocated auth3 with all elements set to zero.
+ */
+auth3_t *auth3_new(void);
+/** Release all storage held by the auth3 in 'victim'. (Do nothing if
+ * 'victim' is NULL.)
+ */
+void auth3_free(auth3_t *victim);
+/** Try to parse a auth3 from the buffer in 'input', using up to
+ * 'len_in' bytes from the input buffer. On success, return the number
+ * of bytes consumed and set *output to the newly allocated auth3_t.
+ * On failure, return -2 if the input appears truncated, and -1 if the
+ * input is otherwise invalid.
+ */
+ssize_t auth3_parse(auth3_t **output, const uint8_t *input, const size_t len_in);
+/** Return the number of bytes we expect to need to encode the auth3
+ * in 'obj'. On failure, return a negative value. Note that this value
+ * may be an overestimate, and can even be an underestimate for
+ * certain unencodeable objects.
+ */
+ssize_t auth3_encoded_len(const auth3_t *obj);
+/** Try to encode the auth3 from 'input' into the buffer at 'output',
+ * using up to 'avail' bytes of the output buffer. On success, return
+ * the number of bytes used. On failure, return -2 if the buffer was
+ * not long enough, and -1 if the input was invalid.
+ */
+ssize_t auth3_encode(uint8_t *output, size_t avail, const auth3_t *input);
+/** Check whether the internal state of the auth3 in 'obj' is
+ * consistent. Return NULL if it is, and a short message if it is not.
+ */
+const char *auth3_check(const auth3_t *obj);
+/** Clear any errors that were set on the object 'obj' by its setter
+ * functions. Return true iff errors were cleared.
+ */
+int auth3_clear_errors(auth3_t *obj);
+/** Return the (constant) length of the array holding the type field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_type(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field type
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_type(auth3_t *inp, size_t idx);
+/** As auth3_get_type, but take and return a const pointer
+ */
+uint8_t auth3_getconst_type(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field type
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_type(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 8-element array field type of 'inp'.
+ */
+uint8_t * auth3_getarray_type(auth3_t *inp);
+/** As auth3_get_type, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_type(const auth3_t *inp);
+/** Return the (constant) length of the array holding the cid field of
+ * the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_cid(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field cid
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_cid(auth3_t *inp, size_t idx);
+/** As auth3_get_cid, but take and return a const pointer
+ */
+uint8_t auth3_getconst_cid(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field cid
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_cid(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field cid of 'inp'.
+ */
+uint8_t * auth3_getarray_cid(auth3_t *inp);
+/** As auth3_get_cid, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_cid(const auth3_t *inp);
+/** Return the (constant) length of the array holding the sid field of
+ * the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_sid(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field sid
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_sid(auth3_t *inp, size_t idx);
+/** As auth3_get_sid, but take and return a const pointer
+ */
+uint8_t auth3_getconst_sid(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field sid
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_sid(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field sid of 'inp'.
+ */
+uint8_t * auth3_getarray_sid(auth3_t *inp);
+/** As auth3_get_sid, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_sid(const auth3_t *inp);
+/** Return the (constant) length of the array holding the cid_ed field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_cid_ed(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field
+ * cid_ed of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_cid_ed(auth3_t *inp, size_t idx);
+/** As auth3_get_cid_ed, but take and return a const pointer
+ */
+uint8_t auth3_getconst_cid_ed(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field
+ * cid_ed of the auth3_t in 'inp', so that it will hold the value
+ * 'elt'.
+ */
+int auth3_set_cid_ed(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field cid_ed of 'inp'.
+ */
+uint8_t * auth3_getarray_cid_ed(auth3_t *inp);
+/** As auth3_get_cid_ed, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_cid_ed(const auth3_t *inp);
+/** Return the (constant) length of the array holding the sid_ed field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_sid_ed(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field
+ * sid_ed of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_sid_ed(auth3_t *inp, size_t idx);
+/** As auth3_get_sid_ed, but take and return a const pointer
+ */
+uint8_t auth3_getconst_sid_ed(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field
+ * sid_ed of the auth3_t in 'inp', so that it will hold the value
+ * 'elt'.
+ */
+int auth3_set_sid_ed(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field sid_ed of 'inp'.
+ */
+uint8_t * auth3_getarray_sid_ed(auth3_t *inp);
+/** As auth3_get_sid_ed, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_sid_ed(const auth3_t *inp);
+/** Return the (constant) length of the array holding the slog field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_slog(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field slog
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_slog(auth3_t *inp, size_t idx);
+/** As auth3_get_slog, but take and return a const pointer
+ */
+uint8_t auth3_getconst_slog(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field slog
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_slog(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field slog of 'inp'.
+ */
+uint8_t * auth3_getarray_slog(auth3_t *inp);
+/** As auth3_get_slog, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_slog(const auth3_t *inp);
+/** Return the (constant) length of the array holding the clog field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_clog(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field clog
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_clog(auth3_t *inp, size_t idx);
+/** As auth3_get_clog, but take and return a const pointer
+ */
+uint8_t auth3_getconst_clog(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field clog
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_clog(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field clog of 'inp'.
+ */
+uint8_t * auth3_getarray_clog(auth3_t *inp);
+/** As auth3_get_clog, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_clog(const auth3_t *inp);
+/** Return the (constant) length of the array holding the scert field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_scert(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field
+ * scert of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_scert(auth3_t *inp, size_t idx);
+/** As auth3_get_scert, but take and return a const pointer
+ */
+uint8_t auth3_getconst_scert(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field
+ * scert of the auth3_t in 'inp', so that it will hold the value
+ * 'elt'.
+ */
+int auth3_set_scert(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field scert of 'inp'.
+ */
+uint8_t * auth3_getarray_scert(auth3_t *inp);
+/** As auth3_get_scert, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_scert(const auth3_t *inp);
+/** Return the (constant) length of the array holding the tlscerts
+ * field of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_tlscerts(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field
+ * tlscerts of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_tlscerts(auth3_t *inp, size_t idx);
+/** As auth3_get_tlscerts, but take and return a const pointer
+ */
+uint8_t auth3_getconst_tlscerts(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field
+ * tlscerts of the auth3_t in 'inp', so that it will hold the value
+ * 'elt'.
+ */
+int auth3_set_tlscerts(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 32-element array field tlscerts of 'inp'.
+ */
+uint8_t * auth3_getarray_tlscerts(auth3_t *inp);
+/** As auth3_get_tlscerts, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_tlscerts(const auth3_t *inp);
+/** Return the position for end_of_fixed_part when we parsed this
+ * object
+ */
+const uint8_t * auth3_get_end_of_fixed_part(const auth3_t *inp);
+/** Return the (constant) length of the array holding the rand field
+ * of the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_rand(const auth3_t *inp);
+/** Return the element at position 'idx' of the fixed array field rand
+ * of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_rand(auth3_t *inp, size_t idx);
+/** As auth3_get_rand, but take and return a const pointer
+ */
+uint8_t auth3_getconst_rand(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the fixed array field rand
+ * of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_rand(auth3_t *inp, size_t idx, uint8_t elt);
+/** Return a pointer to the 24-element array field rand of 'inp'.
+ */
+uint8_t * auth3_getarray_rand(auth3_t *inp);
+/** As auth3_get_rand, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_rand(const auth3_t *inp);
+/** Return the position for end_of_signed when we parsed this object
+ */
+const uint8_t * auth3_get_end_of_signed(const auth3_t *inp);
+/** Return the length of the dynamic array holding the sig field of
+ * the auth3_t in 'inp'.
+ */
+size_t auth3_getlen_sig(const auth3_t *inp);
+/** Return the element at position 'idx' of the dynamic array field
+ * sig of the auth3_t in 'inp'.
+ */
+uint8_t auth3_get_sig(auth3_t *inp, size_t idx);
+/** As auth3_get_sig, but take and return a const pointer
+ */
+uint8_t auth3_getconst_sig(const auth3_t *inp, size_t idx);
+/** Change the element at position 'idx' of the dynamic array field
+ * sig of the auth3_t in 'inp', so that it will hold the value 'elt'.
+ */
+int auth3_set_sig(auth3_t *inp, size_t idx, uint8_t elt);
+/** Append a new element 'elt' to the dynamic array field sig of the
+ * auth3_t in 'inp'.
+ */
+int auth3_add_sig(auth3_t *inp, uint8_t elt);
+/** Return a pointer to the variable-length array field sig of 'inp'.
+ */
+uint8_t * auth3_getarray_sig(auth3_t *inp);
+/** As auth3_get_sig, but take and return a const pointer
+ */
+const uint8_t  * auth3_getconstarray_sig(const auth3_t *inp);
+/** Change the length of the variable-length array field sig of 'inp'
+ * to 'newlen'.Fill extra elements with 0. Return 0 on success; return
+ * -1 and set the error code on 'inp' on failure.
+ */
+int auth3_setlen_sig(auth3_t *inp, size_t newlen);
 /** Return a newly allocated auth_challenge_cell with all elements set
  * to zero.
  */

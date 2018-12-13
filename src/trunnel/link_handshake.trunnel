@@ -55,3 +55,20 @@ struct auth1 with context auth_ctx {
   @ptr end_of_signed;
   u8 sig[];
 }
+
+struct auth3 {
+  u8 type[8];
+  u8 cid[32];
+  u8 sid[32];
+  u8 cid_ed[32];
+  u8 sid_ed[32];
+  u8 slog[32];
+  u8 clog[32];
+  u8 scert[32];
+  u8 tlscerts[32];
+  @ptr end_of_fixed_part;
+  u8 rand[24];
+  @ptr end_of_signed;
+  u8 sig[];
+}
+
