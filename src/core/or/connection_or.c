@@ -2735,6 +2735,9 @@ connection_or_send_auth_challenge_cell(or_connection_t *conn)
   return r;
 }
 
+// TODO: Refactor out the code that creates auth1_t object, maybe split
+// it further if possible.
+
 /** Compute the main body of an AUTHENTICATE cell that a client can use
  * to authenticate itself on a v3 handshake for <b>conn</b>.  Return it
  * in a var_cell_t.

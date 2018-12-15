@@ -2320,11 +2320,12 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   if (4 + authlen > cell->payload_len)
     ERR("Authenticator was truncated");
 
-  auth += 4;
+  auth += 4; // FIXME
 
   if (authlen < V3_AUTH_BODY_LEN + 1)
     ERR("Authenticator was too short");
 
+  // TODO: get rid of expected_cell here.
   expected_cell = connection_or_compute_authenticate_cell_body(
                 chan->conn, authtype, NULL, NULL, 1);
   if (! expected_cell)
@@ -2354,6 +2355,7 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
     // LCOV_EXCL_STOP
   }
 
+  // FIXME
   if (tor_memneq(expected_cell->payload+4, auth, bodylen-24))
     ERR("Some field in the AUTHENTICATE cell body was not as expected");
 
@@ -2379,7 +2381,8 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
     keysize = crypto_pk_keysize(pk);
     signed_data = tor_malloc(keysize);
     signed_len = crypto_pk_public_checksig(pk, signed_data, keysize,
-                                           (char*)auth + V3_AUTH_BODY_LEN,
+                                           (char*)auth +
+                                           V3_AUTH_BODY_LEN, // FIXME
                                            authlen - V3_AUTH_BODY_LEN);
     crypto_pk_free(pk);
     if (signed_len < 0) {

@@ -36,6 +36,7 @@ context auth_ctx {
   u8 is_ed;
 }
 
+// TODO: consider having one auth_payload struct
 struct auth1 with context auth_ctx {
   u8 type[8];
   u8 cid[32];
