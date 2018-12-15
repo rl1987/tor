@@ -2315,7 +2315,10 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   authlen = authenticate_cell_get_len(parsed_auth_cell);
 
   if (!authchallenge_type_is_supported(authtype))
-      ERR("Authenticator type was not recognized");
+    ERR("Authenticator type was not recognized");
+
+  if (4 + authlen > cell->payload_len)
+    ERR("Authenticator was truncated");
 
   auth += 4;
 
