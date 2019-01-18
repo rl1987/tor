@@ -29,6 +29,7 @@
 #include "feature/stats/rephist.h"
 #include "lib/compress/compress.h"
 
+#include "feature/control/control_connection_st.h"
 #include "feature/dircache/cached_dir_st.h"
 #include "feature/dircommon/dir_connection_st.h"
 #include "feature/nodelist/authority_cert_st.h"
@@ -317,6 +318,41 @@ typedef struct get_handler_args_t {
   const char *headers;
 } get_handler_args_t;
 
+typedef enum { DIR_CONNECTION, CONTROL_CONNECTION } dirclient_conn_type_t;
+
+typedef struct {
+  dirclient_conn_type_t type;
+  union {
+    dir_connection_t *dir_conn;
+    control_connection_t *control_conn;
+  } client_conn;
+} dirclient_conn_t;
+
+static dir_connection_t *
+dirclient_conn_get_dir_conn(const dirclient_conn_t *dirclient_conn)
+{
+  tor_assert(dirclient_conn);
+
+  if (dirclient_conn->type == DIR_CONNECTION)
+    return dirclient_conn->client_conn.dir_conn;
+
+  return NULL;
+}
+
+static connection_t *
+dirclient_conn_get_conn(const dirclient_conn_t *dirclient_conn)
+{
+  tor_assert(dirclient_conn);
+
+  if (dirclient_conn->type == DIR_CONNECTION)
+    return TO_CONN(dirclient_conn->client_conn.dir_conn);
+  else if (dirclient_conn->type == CONTROL_CONNECTION)
+    return TO_CONN(dirclient_conn->client_conn.control_conn);
+
+  tor_assert_unreached();
+  return NULL;
+}
+
 /** Entry for handling an HTTP GET request.
  *
  * This entry matches a request if "string" is equal to the requested
@@ -330,27 +366,30 @@ typedef struct get_handler_args_t {
 typedef struct url_table_ent_s {
   const char *string;
   int is_prefix;
-  int (*handler)(dir_connection_t *conn, const get_handler_args_t *args);
+  int (*handler)(dirclient_conn_t *client_conn,
+                 const get_handler_args_t *args);
 } url_table_ent_t;
 
-static int handle_get_frontpage(dir_connection_t *conn,
+static int handle_get_frontpage(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_current_consensus(dir_connection_t *conn,
+static int handle_get_current_consensus(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_status_vote(dir_connection_t *conn,
+static int handle_get_status_vote(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_microdesc(dir_connection_t *conn,
+static int handle_get_microdesc(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_descriptor(dir_connection_t *conn,
+static int handle_get_descriptor(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_keys(dir_connection_t *conn,
+static int handle_get_keys(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_hs_descriptor_v2(dir_connection_t *conn,
+static int handle_get_hs_descriptor_v2(dirclient_conn_t *client_conn,
                                        const get_handler_args_t *args);
-static int handle_get_robots(dir_connection_t *conn,
+static int handle_get_robots(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
-static int handle_get_networkstatus_bridges(dir_connection_t *conn,
+static int handle_get_networkstatus_bridges(dirclient_conn_t *client_conn,
                                 const get_handler_args_t *args);
+static int handle_get_hs_descriptor_v3(dirclient_conn_t *client_conn,
+                                            const get_handler_args_t *args);
 
 /** Table for handling GET requests. */
 static const url_table_ent_t url_table[] = {
@@ -449,7 +488,10 @@ directory_handle_command_get,(dir_connection_t *conn, const char *headers,
       match = !strcmp(url, url_table[i].string);
     }
     if (match) {
-      result = url_table[i].handler(conn, &args);
+      dirclient_conn_t client_conn;
+      client_conn.type = DIR_CONNECTION;
+      client_conn.client_conn.dir_conn = conn;
+      result = url_table[i].handler(&client_conn, &args);
       goto done;
     }
   }
@@ -466,10 +508,14 @@ directory_handle_command_get,(dir_connection_t *conn, const char *headers,
 /** Helper function for GET / or GET /tor/
  */
 static int
-handle_get_frontpage(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_frontpage(dirclient_conn_t *conn, const get_handler_args_t *args)
 {
   (void) args; /* unused */
   const char *frontpage = get_dirportfrontpage();
+
+  // TODO: gracefully fail on control connection.
+  dir_connection_t *dir_conn = dirclient_conn_get_dir_conn(conn);
+  connection_t *raw_conn = dirclient_conn_get_conn(conn);
 
   if (frontpage) {
     size_t dlen;
@@ -479,11 +525,11 @@ handle_get_frontpage(dir_connection_t *conn, const get_handler_args_t *args)
 
     /* [We don't check for write_bucket_low here, since we want to serve
      *  this page no matter what.] */
-    write_http_response_header_impl(conn, dlen, "text/html", "identity",
+    write_http_response_header_impl(dir_conn, dlen, "text/html", "identity",
                                     NULL, DIRPORTFRONTPAGE_CACHE_LIFETIME);
-    connection_buf_add(frontpage, dlen, TO_CONN(conn));
+    connection_buf_add(frontpage, dlen, raw_conn);
   } else {
-    write_short_http_response(conn, 404, "Not found");
+    write_short_http_response(dir_conn, 404, "Not found");
   }
   return 0;
 }
@@ -835,7 +881,7 @@ parse_consensus_request(parsed_consensus_request_t *out,
 /** Helper function for GET /tor/status-vote/current/consensus
  */
 static int
-handle_get_current_consensus(dir_connection_t *conn,
+handle_get_current_consensus(dirclient_conn_t *conn,
                              const get_handler_args_t *args)
 {
   const compress_method_t compress_method =
@@ -848,15 +894,21 @@ handle_get_current_consensus(dir_connection_t *conn,
 
   time_t now = time(NULL);
   parsed_consensus_request_t req;
+  dir_connection_t *dir_conn = dirclient_conn_get_dir_conn(conn);
+  connection_t *raw_conn = dirclient_conn_get_conn(conn);
+  int is_dir_conn = (conn->type == DIR_CONNECTION);
 
   if (parse_consensus_request(&req, args) < 0) {
-    write_short_http_response(conn, 404, "Couldn't parse request");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 404, "Couldn't parse request");
     goto done;
   }
 
   if (digest_list_contains_best_consensus(req.flav,
                                           req.diff_from_digests)) {
-    write_short_http_response(conn, 304, "Not modified");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 304, "Not modified");
+
     geoip_note_ns_response(GEOIP_REJECT_NOT_MODIFIED);
     goto done;
   }
@@ -871,7 +923,9 @@ handle_get_current_consensus(dir_connection_t *conn,
   }
 
   if (req.diff_only && !cached_consensus) {
-    write_short_http_response(conn, 404, "No such diff available");
+    if (is_dir_conn)
+       write_short_http_response(dir_conn, 404, "No such diff available");
+
     geoip_note_ns_response(GEOIP_REJECT_NOT_FOUND);
     goto done;
   }
@@ -895,7 +949,9 @@ handle_get_current_consensus(dir_connection_t *conn,
 
   if (cached_consensus && have_valid_after &&
       !networkstatus_valid_after_is_reasonably_live(valid_after, now)) {
-    write_short_http_response(conn, 404, "Consensus is too new");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 404, "Consensus is too new");
+
     warn_consensus_is_not_reasonably_live(cached_consensus, req.flavor, now,
                                           1);
     geoip_note_ns_response(GEOIP_REJECT_NOT_FOUND);
@@ -903,7 +959,9 @@ handle_get_current_consensus(dir_connection_t *conn,
   } else if (
       cached_consensus && have_valid_until &&
       !networkstatus_valid_until_is_reasonably_live(valid_until, now)) {
-    write_short_http_response(conn, 404, "Consensus is too old");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 404, "Consensus is too old");
+
     warn_consensus_is_not_reasonably_live(cached_consensus, req.flavor, now,
                                           0);
     geoip_note_ns_response(GEOIP_REJECT_NOT_FOUND);
@@ -912,19 +970,23 @@ handle_get_current_consensus(dir_connection_t *conn,
 
   if (cached_consensus && req.want_fps &&
       !client_likes_consensus(cached_consensus, req.want_fps)) {
-    write_short_http_response(conn, 404, "Consensus not signed by sufficient "
-                           "number of requested authorities");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 404,
+                                "Consensus not signed by sufficient "
+                                "number of requested authorities");
     geoip_note_ns_response(GEOIP_REJECT_NOT_ENOUGH_SIGS);
     goto done;
   }
 
-  conn->spool = smartlist_new();
-  clear_spool = 1;
-  {
-    spooled_resource_t *spooled;
-    if (cached_consensus) {
-      spooled = spooled_resource_new_from_cache_entry(cached_consensus);
-      smartlist_add(conn->spool, spooled);
+  if (is_dir_conn) {
+    dir_conn->spool = smartlist_new();
+    clear_spool = 1;
+    {
+      spooled_resource_t *spooled;
+      if (cached_consensus) {
+        spooled = spooled_resource_new_from_cache_entry(cached_consensus);
+        smartlist_add(dir_conn->spool, spooled);
+      }
     }
   }
 
@@ -932,43 +994,49 @@ handle_get_current_consensus(dir_connection_t *conn,
 
   size_t size_guess = 0;
   int n_expired = 0;
-  dirserv_spool_remove_missing_and_guess_size(conn, if_modified_since,
-                                              compress_method != NO_METHOD,
-                                              &size_guess,
-                                              &n_expired);
+  if (is_dir_conn) {
+    dirserv_spool_remove_missing_and_guess_size(dir_conn, if_modified_since,
+                                                compress_method != NO_METHOD,
+                                                &size_guess,
+                                                &n_expired);
 
-  if (!smartlist_len(conn->spool) && !n_expired) {
-    write_short_http_response(conn, 404, "Not found");
-    geoip_note_ns_response(GEOIP_REJECT_NOT_FOUND);
-    goto done;
-  } else if (!smartlist_len(conn->spool)) {
-    write_short_http_response(conn, 304, "Not modified");
-    geoip_note_ns_response(GEOIP_REJECT_NOT_MODIFIED);
-    goto done;
+    if (!smartlist_len(dir_conn->spool) && !n_expired) {
+      write_short_http_response(dir_conn, 404, "Not found");
+      geoip_note_ns_response(GEOIP_REJECT_NOT_FOUND);
+      goto done;
+    } else if (!smartlist_len(dir_conn->spool)) {
+      write_short_http_response(dir_conn, 304, "Not modified");
+      geoip_note_ns_response(GEOIP_REJECT_NOT_MODIFIED);
+      goto done;
+    }
   }
 
-  if (global_write_bucket_low(TO_CONN(conn), size_guess, 2)) {
+  if (global_write_bucket_low(raw_conn, size_guess, 2)) {
     log_debug(LD_DIRSERV,
               "Client asked for network status lists, but we've been "
               "writing too many bytes lately. Sending 503 Dir busy.");
-    write_short_http_response(conn, 503, "Directory busy, try again later");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 503,
+                                "Directory busy, try again later");
     geoip_note_ns_response(GEOIP_REJECT_BUSY);
     goto done;
   }
 
   tor_addr_t addr;
-  if (tor_addr_parse(&addr, (TO_CONN(conn))->address) >= 0) {
+  if (tor_addr_parse(&addr, raw_conn->address) >= 0) {
     geoip_note_client_seen(GEOIP_CLIENT_NETWORKSTATUS,
                            &addr, NULL,
                            time(NULL));
     geoip_note_ns_response(GEOIP_SUCCESS);
     /* Note that a request for a network status has started, so that we
      * can measure the download time later on. */
-    if (conn->dirreq_id)
-      geoip_start_dirreq(conn->dirreq_id, size_guess, DIRREQ_TUNNELED);
-    else
-      geoip_start_dirreq(TO_CONN(conn)->global_identifier, size_guess,
-                         DIRREQ_DIRECT);
+    if (is_dir_conn) {
+      if (dir_conn->dirreq_id)
+        geoip_start_dirreq(dir_conn->dirreq_id, size_guess, DIRREQ_TUNNELED);
+      else
+        geoip_start_dirreq(raw_conn->global_identifier, size_guess,
+                           DIRREQ_DIRECT);
+    }
   }
 
   /* Use this header to tell caches that the response depends on the
@@ -980,25 +1048,30 @@ handle_get_current_consensus(dir_connection_t *conn,
   // The compress_method might have been NO_METHOD, but we store the data
   // compressed. Decompress them using `compression_used`. See fallback code in
   // find_best_consensus() and find_best_diff().
-  write_http_response_headers(conn, -1,
-                             compress_method == NO_METHOD ?
-                               NO_METHOD : compression_used,
-                             vary_header,
-                             smartlist_len(conn->spool) == 1 ? lifetime : 0);
+  if (is_dir_conn)
+    write_http_response_headers(dir_conn, -1,
+                               compress_method == NO_METHOD ?
+                                 NO_METHOD : compression_used,
+                               vary_header,
+                               smartlist_len(dir_conn->spool)==1?lifetime:0);
 
-  if (compress_method == NO_METHOD && smartlist_len(conn->spool))
-    conn->compress_state = tor_compress_new(0, compression_used,
+  if (compress_method == NO_METHOD && is_dir_conn &&
+      smartlist_len(dir_conn->spool))
+    dir_conn->compress_state = tor_compress_new(0, compression_used,
                                             HIGH_COMPRESSION);
 
   /* Prime the connection with some data. */
-  const int initial_flush_result = connection_dirserv_flushed_some(conn);
-  tor_assert_nonfatal(initial_flush_result == 0);
+  if (is_dir_conn) {
+    const int initial_flush_result = connection_dirserv_flushed_some(dir_conn);
+    tor_assert_nonfatal(initial_flush_result == 0);
+  }
+
   goto done;
 
  done:
   parsed_consensus_request_clear(&req);
   if (clear_spool) {
-    dir_conn_clear_spool(conn);
+    dir_conn_clear_spool(dir_conn);
   }
   return 0;
 }
@@ -1006,8 +1079,12 @@ handle_get_current_consensus(dir_connection_t *conn,
 /** Helper function for GET /tor/status-vote/{current,next}/...
  */
 static int
-handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_status_vote(dirclient_conn_t *conn, const get_handler_args_t *args)
 {
+  dir_connection_t *dir_conn = dirclient_conn_get_dir_conn(conn);
+  connection_t *raw_conn = dirclient_conn_get_conn(conn);
+  int is_dir_conn = (conn->type == DIR_CONNECTION);
+
   const char *url = args->url;
   {
     ssize_t body_len = 0;
@@ -1020,7 +1097,7 @@ handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
     smartlist_t *dir_items = smartlist_new();
     dirvote_dirreq_get_status_vote(url, items, dir_items);
     if (!smartlist_len(dir_items) && !smartlist_len(items)) {
-      write_short_http_response(conn, 404, "Not found");
+      write_short_http_response(dir_conn, 404, "Not found");
       goto vote_done;
     }
 
@@ -1056,24 +1133,27 @@ handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
         }
       });
 
-    if (global_write_bucket_low(TO_CONN(conn), estimated_len, 2)) {
-      write_short_http_response(conn, 503, "Directory busy, try again later");
+    if (global_write_bucket_low(raw_conn, estimated_len, 2)) {
+      if (is_dir_conn)
+        write_short_http_response(dir_conn, 503,
+                                  "Directory busy, try again later");
       goto vote_done;
     }
-    write_http_response_header(conn, body_len ? body_len : -1,
-                 compress_method,
-                 lifetime);
+    if (is_dir_conn)
+      write_http_response_header(dir_conn, body_len ? body_len : -1,
+                   compress_method,
+                   lifetime);
 
     if (smartlist_len(items)) {
       if (compress_method != NO_METHOD) {
-        conn->compress_state = tor_compress_new(1, compress_method,
+        dir_conn->compress_state = tor_compress_new(1, compress_method,
                            choose_compression_level(estimated_len));
         SMARTLIST_FOREACH(items, const char *, c,
-                 connection_buf_add_compress(c, strlen(c), conn, 0));
-        connection_buf_add_compress("", 0, conn, 1);
+                 connection_buf_add_compress(c, strlen(c), dir_conn, 0));
+        connection_buf_add_compress("", 0, dir_conn, 1);
       } else {
         SMARTLIST_FOREACH(items, const char *, c,
-                         connection_buf_add(c, strlen(c), TO_CONN(conn)));
+                         connection_buf_add(c, strlen(c), raw_conn));
       }
     } else {
       SMARTLIST_FOREACH(dir_items, cached_dir_t *, d,
@@ -1081,7 +1161,7 @@ handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
                                     d->dir_compressed : d->dir,
                                   compress_method != NO_METHOD ?
                                     d->dir_compressed_len : d->dir_len,
-                                  TO_CONN(conn)));
+                                  raw_conn));
     }
   vote_done:
     smartlist_free(items);
@@ -1095,13 +1175,19 @@ handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
 /** Helper function for GET /tor/micro/d/...
  */
 static int
-handle_get_microdesc(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_microdesc(dirclient_conn_t *client_conn,
+                     const get_handler_args_t *args)
 {
   const char *url = args->url;
   const compress_method_t compress_method =
     find_best_compression_method(args->compression_supported, 1);
+
+  connection_t *raw_conn = dirclient_conn_get_conn(client_conn);
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+
   int clear_spool = 1;
-  {
+  if (is_dir_conn) {
+    dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
     conn->spool = smartlist_new();
 
     dir_split_resource_into_spoolable(url+strlen("/tor/micro/d/"),
@@ -1117,7 +1203,7 @@ handle_get_microdesc(dir_connection_t *conn, const get_handler_args_t *args)
       write_short_http_response(conn, 404, "Not found");
       goto done;
     }
-    if (global_write_bucket_low(TO_CONN(conn), size_guess, 2)) {
+    if (global_write_bucket_low(raw_conn, size_guess, 2)) {
       log_info(LD_DIRSERV,
                "Client asked for server descriptors, but we've been "
                "writing too many bytes lately. Sending 503 Dir busy.");
@@ -1140,8 +1226,8 @@ handle_get_microdesc(dir_connection_t *conn, const get_handler_args_t *args)
   }
 
  done:
-  if (clear_spool) {
-    dir_conn_clear_spool(conn);
+  if (clear_spool && is_dir_conn) {
+    dir_conn_clear_spool(dirclient_conn_get_dir_conn(client_conn));
   }
   return 0;
 }
@@ -1149,16 +1235,23 @@ handle_get_microdesc(dir_connection_t *conn, const get_handler_args_t *args)
 /** Helper function for GET /tor/{server,extra}/...
  */
 static int
-handle_get_descriptor(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_descriptor(dirclient_conn_t *client_conn,
+                      const get_handler_args_t *args)
 {
   const char *url = args->url;
   const compress_method_t compress_method =
     find_best_compression_method(args->compression_supported, 1);
   const or_options_t *options = get_options();
+
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+
   int clear_spool = 1;
-  if (!strcmpstart(url,"/tor/server/") ||
+
+  if ((!strcmpstart(url,"/tor/server/") ||
       (!options->BridgeAuthoritativeDir &&
-       !options->BridgeRelay && !strcmpstart(url,"/tor/extra/"))) {
+       !options->BridgeRelay && !strcmpstart(url,"/tor/extra/")))
+      && is_dir_conn) {
+    dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
     int res;
     const char *msg = NULL;
     int cache_lifetime = 0;
@@ -1236,21 +1329,26 @@ handle_get_descriptor(dir_connection_t *conn, const get_handler_args_t *args)
     goto done;
   }
  done:
-  if (clear_spool)
-    dir_conn_clear_spool(conn);
+  if (clear_spool && is_dir_conn)
+    dir_conn_clear_spool(dirclient_conn_get_dir_conn(client_conn));
   return 0;
 }
 
 /** Helper function for GET /tor/keys/...
  */
 static int
-handle_get_keys(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_keys(dirclient_conn_t *client_conn, const get_handler_args_t *args)
 {
   const char *url = args->url;
   const compress_method_t compress_method =
     find_best_compression_method(args->compression_supported, 1);
   const time_t if_modified_since = args->if_modified_since;
-  {
+
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+
+  if (is_dir_conn) {
+    dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
+
     smartlist_t *certs = smartlist_new();
     ssize_t len = -1;
     if (!strcmp(url, "/tor/keys/all")) {
@@ -1348,10 +1446,16 @@ handle_get_keys(dir_connection_t *conn, const get_handler_args_t *args)
 /** Helper function for GET /tor/rendezvous2/
  */
 static int
-handle_get_hs_descriptor_v2(dir_connection_t *conn,
+handle_get_hs_descriptor_v2(dirclient_conn_t *client_conn,
                             const get_handler_args_t *args)
 {
   const char *url = args->url;
+
+  if (client_conn->type != DIR_CONNECTION)
+    goto done;
+
+  dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
+
   if (connection_dir_is_encrypted(conn)) {
     /* Handle v2 rendezvous descriptor fetch request. */
     const char *descp;
@@ -1385,8 +1489,8 @@ handle_get_hs_descriptor_v2(dir_connection_t *conn,
 
 /** Helper function for GET /tor/hs/3/<z>. Only for version 3.
  */
-STATIC int
-handle_get_hs_descriptor_v3(dir_connection_t *conn,
+static int
+handle_get_hs_descriptor_v3(dirclient_conn_t *client_conn,
                             const get_handler_args_t *args)
 {
   int retval;
@@ -1394,9 +1498,13 @@ handle_get_hs_descriptor_v3(dir_connection_t *conn,
   const char *pubkey_str = NULL;
   const char *url = args->url;
 
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+  dir_connection_t *dir_conn = dirclient_conn_get_dir_conn(client_conn);
+  connection_t *raw_conn = dirclient_conn_get_conn(client_conn);
+
   /* Reject unencrypted dir connections */
-  if (!connection_dir_is_encrypted(conn)) {
-    write_short_http_response(conn, 404, "Not found");
+  if (is_dir_conn && !connection_dir_is_encrypted(dir_conn)) {
+    write_short_http_response(dir_conn, 404, "Not found");
     goto done;
   }
 
@@ -1408,13 +1516,16 @@ handle_get_hs_descriptor_v3(dir_connection_t *conn,
   retval = hs_cache_lookup_as_dir(HS_VERSION_THREE,
                                   pubkey_str, &desc_str);
   if (retval <= 0 || desc_str == NULL) {
-    write_short_http_response(conn, 404, "Not found");
+    if (is_dir_conn)
+      write_short_http_response(dir_conn, 404, "Not found");
     goto done;
   }
 
   /* Found requested descriptor! Pass it to this nice client. */
-  write_http_response_header(conn, strlen(desc_str), NO_METHOD, 0);
-  connection_buf_add(desc_str, strlen(desc_str), TO_CONN(conn));
+  if (is_dir_conn)
+    write_http_response_header(dir_conn, strlen(desc_str), NO_METHOD, 0);
+
+  connection_buf_add(desc_str, strlen(desc_str), raw_conn);
 
  done:
   return 0;
@@ -1423,15 +1534,20 @@ handle_get_hs_descriptor_v3(dir_connection_t *conn,
 /** Helper function for GET /tor/networkstatus-bridges
  */
 static int
-handle_get_networkstatus_bridges(dir_connection_t *conn,
+handle_get_networkstatus_bridges(dirclient_conn_t *client_conn,
                                  const get_handler_args_t *args)
 {
   const char *headers = args->headers;
 
   const or_options_t *options = get_options();
+
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+
+  dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
+
   if (options->BridgeAuthoritativeDir &&
       options->BridgePassword_AuthDigest_ &&
-      connection_dir_is_encrypted(conn)) {
+      connection_dir_is_encrypted(conn) && is_dir_conn) {
     char *status;
     char digest[DIGEST256_LEN];
 
@@ -1463,10 +1579,14 @@ handle_get_networkstatus_bridges(dir_connection_t *conn,
 
 /** Helper function for GET robots.txt or /tor/robots.txt */
 static int
-handle_get_robots(dir_connection_t *conn, const get_handler_args_t *args)
+handle_get_robots(dirclient_conn_t *client_conn,
+                  const get_handler_args_t *args)
 {
+  int is_dir_conn = (client_conn->type == DIR_CONNECTION);
+
   (void)args;
-  {
+  if (is_dir_conn) {
+    dir_connection_t *conn = dirclient_conn_get_dir_conn(client_conn);
     const char robots[] = "User-agent: *\r\nDisallow: /\r\n";
     size_t len = strlen(robots);
     write_http_response_header(conn, len, NO_METHOD, ROBOTS_CACHE_LIFETIME);
