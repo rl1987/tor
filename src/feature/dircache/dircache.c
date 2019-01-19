@@ -511,6 +511,10 @@ static int
 handle_get_frontpage(dirclient_conn_t *conn, const get_handler_args_t *args)
 {
   (void) args; /* unused */
+
+  if (conn->type != DIR_CONNECTION)
+    return -2;
+
   const char *frontpage = get_dirportfrontpage();
 
   // TODO: gracefully fail on control connection.
