@@ -1841,8 +1841,10 @@ http_set_address_origin(const char *headers, connection_t *conn)
   }
 }
 
-int directory_handle_control_getinfo(control_connection_t *conn, const char
-                                     *url) {
+int
+directory_handle_control_getinfo(control_connection_t *conn,
+                                 const char *url)
+{
   // TODO: refactor linear search into separate function and reuse
   for (int i = 0; url_table[i].string; ++i) {
     int match;
