@@ -902,6 +902,10 @@ handle_get_current_consensus(dirclient_conn_t *conn,
   connection_t *raw_conn = dirclient_conn_get_conn(conn);
   int is_dir_conn = (conn->type == DIR_CONNECTION);
 
+  if (BUG(!is_dir_conn)) {
+    return -1;
+  }
+
   if (parse_consensus_request(&req, args) < 0) {
     if (is_dir_conn)
       write_short_http_response(dir_conn, 404, "Couldn't parse request");
