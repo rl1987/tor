@@ -14,6 +14,10 @@
 
 int directory_handle_command(dir_connection_t *conn);
 
+int dircache_can_handle_url(const char *url);
+int dircache_get_documents_by_url(smartlist_t *answers, const char *url,
+                                  char **msg);
+
 #ifdef DIRCACHE_PRIVATE
 MOCK_DECL(STATIC int, directory_handle_command_get,(dir_connection_t *conn,
                                                     const char *headers,

@@ -64,6 +64,7 @@
 #include "feature/control/control.h"
 #include "feature/control/fmt_serverstatus.h"
 #include "feature/control/getinfo_geoip.h"
+#include "feature/dircache/dircache.h"
 #include "feature/dircache/dirserv.h"
 #include "feature/dirclient/dirclient.h"
 #include "feature/dirclient/dlstatus.h"
@@ -2361,8 +2362,6 @@ getinfo_helper_dir(control_connection_t *control_conn,
     *cp = '\0';
     tor_free(url);
     smartlist_free(descs);
-  } else if (!strcmpstart(question, "dir/status/")) {
-    *answer = tor_strdup("");
   } else if (!strcmp(question, "dir/status-vote/current/consensus")) { /* v3 */
     if (we_want_to_fetch_flavor(get_options(), FLAV_NS)) {
       const cached_dir_t *consensus = dirserv_get_consensus("ns");
@@ -2381,6 +2380,25 @@ getinfo_helper_dir(control_connection_t *control_conn,
         return -1;
       }
     }
+  } else if (!strcmpstart(question, "dir/")) {
+    size_t answer_len = 0;
+    char *url = NULL;
+    smartlist_t *answers = smartlist_new();
+    const char *msg;
+    int res;
+    tor_asprintf(&url, "/tor/%s", question+4);
+    res = dircache_get_documents_by_url(answers, url, &msg);
+    if (res) {
+      log_warn(LD_CONTROL, "getinfo '%s': %s", question, msg);
+      smartlist_free(descs);
+      tor_free(url);
+      *errmsg = msg;
+      return -1;
+    }
+
+    *answer = smartlist_join_strings(answers, "\r\n", 0, NULL);
+    tor_free(url);
+    smartlist_free(answers);
   } else if (!strcmp(question, "network-status")) { /* v1 */
     static int network_status_warned = 0;
     if (!network_status_warned) {

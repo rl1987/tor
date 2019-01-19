@@ -369,6 +369,36 @@ static const url_table_ent_t url_table[] = {
   { NULL, 0, NULL },
 };
 
+static url_table_ent_t *
+find_url_table_entry_for_url(const char *url)
+{
+  int i, result = -1;
+  for (i = 0; url_table[i].string; ++i) {
+    int match;
+    if (url_table[i].is_prefix) {
+      match = !strcmpstart(url, url_table[i].string);
+    } else {
+      match = !strcmp(url, url_table[i].string);
+    }
+    return &url_table[i];
+  }
+  return NULL;
+}
+
+int
+dircache_get_documents_by_url(smartlist_t *answers, const char *url,
+                              char **msg)
+{
+
+}
+
+int
+dircache_get_documents_by_url(smartlist_t *answers, const char *url,
+                              char **msg) {
+  // TODO
+  return -1;
+}
+
 /** Helper function: called when a dirserver gets a complete HTTP GET
  * request.  Look for a request for a directory or for a rendezvous
  * service descriptor.  On finding one, write a response into
