@@ -2381,6 +2381,14 @@ getinfo_helper_dir(control_connection_t *control_conn,
         return -1;
       }
     }
+  } else if (!strcmpstart(question, "dir/")) {
+    char *url = NULL;
+    tor_asprintf(&url, "/tor/%s", question+4);
+
+    int res = directory_handle_control_getinfo(control_conn, url);
+
+    tor_free(url);
+    return res;
   } else if (!strcmp(question, "network-status")) { /* v1 */
     static int network_status_warned = 0;
     if (!network_status_warned) {

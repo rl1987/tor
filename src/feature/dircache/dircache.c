@@ -1833,6 +1833,26 @@ http_set_address_origin(const char *headers, connection_t *conn)
   }
 }
 
+int directory_handle_control_getinfo(control_connection_t *conn, const char
+                                     *url) {
+  // TODO: refactor linear search into separate function and reuse
+  for (int i = 0; url_table[i].string; ++i) {
+    int match;
+    if (url_table[i].is_prefix) {
+      match = !strcmpstart(url, url_table[i].string);
+    } else {
+      match = !strcmp(url, url_table[i].string);
+    }
+    if (match) {
+      dirclient_conn_t client_conn;
+      client_conn.type = CONTROL_CONNECTION;
+      client_conn.client_conn.control_conn = conn;
+      return url_table[i].handler(&client_conn, NULL);
+    }
+  }
+  return -2;
+}
+
 /** Called when a dirserver receives data on a directory connection;
  * looks for an HTTP request.  If the request is complete, remove it
  * from the inbuf, try to process it; otherwise, leave it on the

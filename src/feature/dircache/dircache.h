@@ -12,7 +12,11 @@
 #ifndef TOR_DIRCACHE_H
 #define TOR_DIRCACHE_H
 
+#include "core/or/or.h"
+
 int directory_handle_command(dir_connection_t *conn);
+int directory_handle_control_getinfo(control_connection_t *conn, const char
+                                     *url);
 
 #ifdef DIRCACHE_PRIVATE
 MOCK_DECL(STATIC int, directory_handle_command_get,(dir_connection_t *conn,
