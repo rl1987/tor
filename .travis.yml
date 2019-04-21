@@ -73,10 +73,8 @@ matrix:
   exclude:
     ## Clang doesn't work in containerized builds, see below.
     - compiler: clang
-      sudo: false
     ## Non-containerized gcc are slow and redundant.
     - compiler: gcc
-      sudo: required
     ## gcc on OSX is less useful, because the default compiler is clang.
     - compiler: gcc
       os: osx
