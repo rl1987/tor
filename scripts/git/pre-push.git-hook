@@ -63,7 +63,7 @@ do
                         cur_branch=$(git rev-parse --abbrev-ref HEAD)
                         other_branch_tips=$(git rev-list \
                         --exclude="$cur_branch" --branches --no-walk)
-			range=$(git rev-list "$cur_branch" --not \
+			range=$(git rev-list $cur_branch --not \
                         "$other_branch_tips" | tail -n 1)
 		else
 			# Update to existing branch, examine new commits
