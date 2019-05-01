@@ -33,7 +33,7 @@ fi
 remote="$1"
 remote_loc="$2"
 
-if [[ "$remote_loc" != *github.com/torproject/tor.git ]] ||
+if [[ "$remote_loc" != *github.com/torproject/tor.git ]] &&
    [[ "$remote_loc" != *torproject.org/tor.git ]]; then
   echo "Not pushing to upstream - refraining from further checks"
   exit 0
