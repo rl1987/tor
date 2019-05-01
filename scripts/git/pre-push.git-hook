@@ -58,8 +58,13 @@ do
 	else
 		if [ "$remote_sha" = $z40 ]
 		then
-			# New branch, examine all commits
-			range="$local_sha"
+			# New branch, examine all commits that are new to this
+                        # branch
+                        cur_branch=$(git rev-parse --abbrev-ref HEAD)
+                        other_branch_tips=$(git rev-list \
+                        --exclude="$cur_branch" --branches --no-walk)
+			range=$(git rev-list "$cur_branch" --not \
+                        "$other_branch_tips" | tail -n 1)
 		else
 			# Update to existing branch, examine new commits
 			range="$remote_sha..$local_sha"
