@@ -167,7 +167,16 @@ tor_brotli_compress_process(tor_brotli_compress_state_t *state,
 void
 tor_brotli_compress_free_(tor_brotli_compress_state_t *state)
 {
-  (void)state;
+#ifdef HAVE_LIBBROTLIENC
+  if (state->u.encoder_state)
+    BrotliEncoderDestroyInstance(state->u.encoder_state);
+#endif
+#ifdef HAVE_LIBBROTLIDEC
+  if (state->u.decoder_state)
+    BrotliDecoderDestroyInstance(state->u.decoder_state);
+#endif
+
+  tor_free(state);
 }
 
 size_t
