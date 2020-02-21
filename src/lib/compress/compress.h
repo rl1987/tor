@@ -24,7 +24,8 @@ typedef enum compress_method_t {
   ZLIB_METHOD=2,
   LZMA_METHOD=3,
   ZSTD_METHOD=4,
-  UNKNOWN_METHOD=5, // This method must be last. Add new ones in the middle.
+  BROTLI_METHOD=5,
+  UNKNOWN_METHOD=6, // This method must be last. Add new ones in the middle.
 } compress_method_t;
 
 /**
