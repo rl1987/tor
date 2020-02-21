@@ -8,8 +8,8 @@
  * \brief Header for compress_brotli.c
  **/
 
-#ifndef TOR_COMPRESS_LZMA_H
-#define TOR_COMPRESS_LZMA_H
+#ifndef TOR_COMPRESS_BROTLI_H
+#define TOR_COMPRESS_BROTLI_H
 
 int tor_brotli_method_supported(void);
 
@@ -43,5 +43,5 @@ size_t tor_brotli_get_total_allocation(void);
 
 void tor_brotli_init(void);
 
-#endif /* !defined(TOR_COMPRESS_LZMA_H) */
+#endif /* !defined(TOR_COMPRESS_BROTLI_H) */
 
