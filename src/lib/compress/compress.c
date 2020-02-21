@@ -469,7 +469,8 @@ tor_compress_get_total_allocation(void)
   return atomic_counter_get(&total_compress_allocation) +
          tor_zlib_get_total_allocation() +
          tor_lzma_get_total_allocation() +
-         tor_zstd_get_total_allocation();
+         tor_zstd_get_total_allocation() +
+         tor_brotli_get_total_allocation();
 }
 
 /** Internal state for an incremental compression/decompression.  The body of
