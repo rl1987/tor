@@ -33,7 +33,8 @@ AC_CANONICAL_HOST
 PKG_PROG_PKG_CONFIG
 if test "x$PKG_CONFIG" = "x" ; then
     pkg_config_user_action="install pkg-config, and check the PKG_CONFIG_PATH environment variable"
-    AC_MSG_NOTICE([Some libraries need pkg-config, including systemd, nss, lzma, zstd, and custom mallocs.])
+    AC_MSG_NOTICE([Some libraries need pkg-config, including systemd, nss,
+                   lzma, zstd, brotli and custom mallocs.])
     AC_MSG_NOTICE([To use those libraries, $pkg_config_user_action.])
 else
     pkg_config_user_action="check the PKG_CONFIG_PATH environment variable"
@@ -1183,6 +1184,27 @@ if test "x$have_zstd" = "xyes"; then
 fi
 AC_SUBST(TOR_ZSTD_CFLAGS)
 AC_SUBST(TOR_ZSTD_LIBS)
+
+dnl ------------------------------------------------------
+dnl Check if we can use libbrotli.
+
+AC_ARG_ENABLE(brotli,
+      AS_HELP_STRING(--enable-brotli, [enable support for Brotli compression scheme.]),
+      [case "${enableval}" in
+        "yes") ;;
+        "no")  ;;
+        * ) AC_MSG_ERROR(bad value for --enable-brotli) ;;
+      esac], [enable_brotli=auto])
+
+if test "x$enable_brotli" != "xno"; then
+  AC_CHECK_HEADERS([brotli/encode.h])
+  AC_CHECK_HEADERS([brotli/decode.h])
+  AC_CHECK_HEADERS([brotli/types.h])
+  AC_CHECK_HEADERS([brotli/port.h])
+
+  AC_CHECK_LIB(brotlienc, BrotliEncoderCreateInstance)
+  AC_CHECK_LIB(brotlidec, BrotliDecoderCreateInstance)
+fi
 
 dnl ----------------------------------------------------------------------
 dnl Check if libcap is available for capabilities.
@@ -2647,6 +2669,9 @@ PPRINT_PROP_BOOL([liblzma (--enable-lzma)], $value)
 
 test "x$enable_zstd" = "xyes" && value=1 || value=0
 PPRINT_PROP_BOOL([libzstd (--enable-zstd)], $value)
+
+test "x$enable_brotli" = "xyes" && value=1 || value=0
+PPRINT_PROP_BOOL([libbrotli (--enable-brotli)], $value)
 
 AS_ECHO
 PPRINT_SUBTITLE([Hardening])
