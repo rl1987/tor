@@ -699,6 +699,7 @@ tor_compress_init(void)
   tor_zlib_init();
   tor_lzma_init();
   tor_zstd_init();
+  tor_brotli_init();
 
   return 0;
 }
