@@ -36,7 +36,8 @@ void tor_brotli_compress_free_(tor_brotli_compress_state_t *state);
   FREE_AND_NULL(tor_brotli_compress_state_t,   \
                            tor_brotli_compress_free_, (st))
 
-size_t tor_brotli_compress_state_size(const tor_brotli_compress_state_t *state);
+size_t tor_brotli_compress_state_size(
+    const tor_brotli_compress_state_t *state);
 
 size_t tor_brotli_get_total_allocation(void);
 
