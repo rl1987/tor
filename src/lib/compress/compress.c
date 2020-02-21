@@ -355,6 +355,7 @@ static const struct {
   { "x-tor-lzma", LZMA_METHOD },
   { "x-zstd" , ZSTD_METHOD },
   { "identity", NO_METHOD },
+  { "brotli", BROTLI_METHOD },
 
   /* Later entries in this table are not canonical; these are recognized but
    * not emitted. */
@@ -384,6 +385,7 @@ static const struct {
   { ZLIB_METHOD, "deflated" },
   { LZMA_METHOD, "LZMA compressed" },
   { ZSTD_METHOD, "Zstandard compressed" },
+  { BROTLI_METHOD, "Brotli compressed" },
   { UNKNOWN_METHOD, "unknown encoding" },
 };
 
