@@ -2,22 +2,48 @@
 
 #include "lib/compress/compress.h"
 #include "lib/compress/compress_brotli.h"
+#include "lib/string/printf.h"
+
+#ifdef HAVE_BROTLI_ENCODE_H
+#include <brotli/encode.h>
+#endif
+
+#ifdef HAVE_BROTLI_DECODE_H
+#include <brotli/decode.h>
+#endif
 
 int
 tor_brotli_method_supported(void)
 {
+#if defined(HAVE_LIBBROTLIDEC) && defined(HAVE_LIBBROTLIENC)
+  return 1;
+#else
   return 0;
+#endif
 }
+#define VERSION_STR_MAX_LEN 16 /* more than enough space for 99.99.99 */
 
 const char *
 tor_brotli_get_version_str(void)
 {
+#ifdef HAVE_BROTLI_DECODE_H
+  static char str[VERSION_STR_MAX_LEN] = "";
+
+  uint32_t version = BrotliDecoderVersion();
+
+  tor_snprintf(str, sizeof(str), "%u.%u.%u",
+      version >> 24, (version >> 12) & 0xFFF, version & 0xFFF);
+
+  return str;
+#else
   return NULL;
+#endif
 }
 
 const char *
 tor_brotli_get_header_version_str(void)
 {
+  /* libbrotli version is not available in the public headers. */
   return NULL;
 }
 
