@@ -122,10 +122,25 @@ tor_brotli_compress_new(int compress,
         tor_brotli_quality_from_compression_level(compression_level));
 
     result->u.encoder_state = encoder_state;
+
+    return result;
 #endif
   } else {
 #ifdef HAVE_LIBBROTLIDEC
+    tor_brotli_compress_state_t *result =
+      tor_malloc_zero(sizeof(tor_brotli_compress_state_t));
 
+    BrotliDecoderState *decoder_state = BrotliDecoderCreateInstance(
+        tor_brotli_alloc, tor_brotli_free, NULL);
+
+    if (!decoder_state) {
+      log_warn(LD_GENERAL, "Error creating Brotli decoder instance");
+      goto err;
+    }
+
+    result->u.decoder_state = decoder_state;
+
+    return result;
 #endif
   }
 
