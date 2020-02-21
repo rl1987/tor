@@ -22,11 +22,12 @@
 #include <netinet/in.h>
 #endif
 
+#include "lib/compress/compress.h"
 #include "lib/log/log.h"
 #include "lib/log/util_bug.h"
 #include "lib/arch/bytes.h"
 #include "lib/ctime/di_ops.h"
-#include "lib/compress/compress.h"
+#include "lib/compress/compress_brotli.h"
 #include "lib/compress/compress_lzma.h"
 #include "lib/compress/compress_none.h"
 #include "lib/compress/compress_sys.h"
@@ -311,6 +312,8 @@ tor_compress_supports_method(compress_method_t method)
       return tor_lzma_method_supported();
     case ZSTD_METHOD:
       return tor_zstd_method_supported();
+    case BROTLI_METHOD:
+      return tor_brotli_method_supported();
     case NO_METHOD:
       return 1;
     case UNKNOWN_METHOD:
@@ -424,6 +427,8 @@ tor_compress_version_str(compress_method_t method)
       return tor_lzma_get_version_str();
     case ZSTD_METHOD:
       return tor_zstd_get_version_str();
+    case BROTLI_METHOD:
+      return tor_brotli_get_version_str();
     case NO_METHOD:
     case UNKNOWN_METHOD:
     default:
@@ -445,6 +450,8 @@ tor_compress_header_version_str(compress_method_t method)
       return tor_lzma_get_header_version_str();
     case ZSTD_METHOD:
       return tor_zstd_get_header_version_str();
+    case BROTLI_METHOD:
+      return tor_brotli_get_header_version_str();
     case NO_METHOD:
     case UNKNOWN_METHOD:
     default:
@@ -472,6 +479,7 @@ struct tor_compress_state_t {
     tor_zlib_compress_state_t *zlib_state;
     tor_lzma_compress_state_t *lzma_state;
     tor_zstd_compress_state_t *zstd_state;
+    tor_brotli_compress_state_t *brotli_state;
   } u; /**< Compression backend state. */
 };
 
@@ -516,6 +524,16 @@ tor_compress_new(int compress, compress_method_t method,
         goto err;
 
       state->u.zstd_state = zstd_state;
+      break;
+    }
+    case BROTLI_METHOD: {
+      tor_brotli_compress_state_t *brotli_state =
+        tor_brotli_compress_new(compress, method, compression_level);
+
+      if (brotli_state == NULL)
+        goto err;
+
+      state->u.brotli_state = brotli_state;
       break;
     }
     case NO_METHOD: {
@@ -580,6 +598,11 @@ tor_compress_process(tor_compress_state_t *state,
                                      out, out_len, in, in_len,
                                      finish);
       break;
+    case BROTLI_METHOD:
+      rv = tor_brotli_compress_process(state->u.brotli_state,
+                                       out, out_len, in, in_len,
+                                       finish);
+      break;
     case NO_METHOD:
       rv = tor_cnone_compress_process(out, out_len, in, in_len,
                                       finish);
@@ -623,6 +646,9 @@ tor_compress_free_(tor_compress_state_t *state)
     case ZSTD_METHOD:
       tor_zstd_compress_free(state->u.zstd_state);
       break;
+    case BROTLI_METHOD:
+      tor_brotli_compress_free(state->u.brotli_state);
+      break;
     case NO_METHOD:
       break;
     case UNKNOWN_METHOD:
@@ -652,6 +678,9 @@ tor_compress_state_size(const tor_compress_state_t *state)
       break;
     case ZSTD_METHOD:
       size += tor_zstd_compress_state_size(state->u.zstd_state);
+      break;
+    case BROTLI_METHOD:
+      size += tor_brotli_compress_state_size(state->u.brotli_state);
       break;
     case NO_METHOD:
     case UNKNOWN_METHOD:
