@@ -816,6 +816,8 @@ struct testcase_t buffer_tests[] = {
     &passthrough_setup, (char*)"x-zstd" },
   { "compress/lzma", test_buffers_compress, TT_FORK,
     &passthrough_setup, (char*)"x-tor-lzma" },
+  { "compress/brotli", test_buffers_compress, TT_FORK,
+    &passthrough_setup, (char*)"brotli" },
   { "compress/none", test_buffers_compress, TT_FORK,
     &passthrough_setup, (char*)"identity" },
 
