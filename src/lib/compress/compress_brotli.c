@@ -61,6 +61,9 @@ struct tor_brotli_compress_state_t {
   } u;
 
   int compress;
+
+  size_t input_so_far;
+  size_t output_so_far;
 };
 
 static void *
@@ -154,6 +157,59 @@ tor_brotli_compress_process(tor_brotli_compress_state_t *state,
                           const char **in, size_t *in_len,
                           int finish)
 {
+  tor_assert(state);
+
+  size_t old_in_len = *in_len;
+
+  if (state->compress) {
+#if HAVE_LIBBROTLIENC
+    BrotliEncoderOperation op =
+      finish ? BROTLI_OPERATION_FINISH : BROTLI_OPERATION_FLUSH;
+
+    size_t total_out = 0;
+
+    BROTLI_BOOL success = BrotliEncoderCompressStream(state->u.encoder_state,
+        op, in_len, (const uint8_t **)in, out_len, (uint8_t **)out,
+        &total_out);
+
+    if (success) {
+      return TOR_COMPRESS_OK;
+    } else {
+      if (BrotliEncoderHasMoreOutput(state->u.encoder_state)) {
+        return TOR_COMPRESS_BUFFER_FULL;
+      } else {
+        return TOR_COMPRESS_ERROR;
+      }
+    }
+#endif
+  } else {
+#if HAVE_LIBBROTLIDEC
+    size_t total_out = 0;
+
+    BROTLI_BOOL success = BrotliDecoderDecompressStream(state->u.decoder_state,
+        in_len, (const uint8_t **)in, out_len, (uint8_t **)out, &total_out);
+
+    state->input_so_far += old_in_len - *in_len;
+    state->output_so_far = total_out;
+
+    if (tor_compress_is_compression_bomb(state->input_so_far,
+                                         state->output_so_far)) {
+      log_warn(LD_DIR, "Possible compression bomb; abandoning Brotli stream.");
+      return TOR_COMPRESS_ERROR;
+    }
+
+    if (success) {
+      return TOR_COMPRESS_OK;
+    } else {
+      if (BrotliDecoderHasMoreOutput(state->u.decoder_state)) {
+        return TOR_COMPRESS_BUFFER_FULL;
+      } else {
+        return TOR_COMPRESS_ERROR;
+      }
+    }
+#endif
+  }
+
   (void)state;
   (void)out;
   (void)out_len;
