@@ -6,6 +6,7 @@
 #include "lib/compress/compress.h"
 #include "lib/compress/compress_brotli.h"
 #include "lib/string/printf.h"
+#include "lib/thread/threads.h"
 
 #ifdef HAVE_BROTLI_ENCODE_H
 #include <brotli/encode.h>
@@ -14,6 +15,8 @@
 #ifdef HAVE_BROTLI_DECODE_H
 #include <brotli/decode.h>
 #endif
+
+static atomic_counter_t total_brotli_allocation;
 
 int
 tor_brotli_method_supported(void)
@@ -70,6 +73,7 @@ static void *
 tor_brotli_alloc(void *opaque, size_t len)
 {
   (void)opaque;
+  // XXX: this is not included into total_brotli_allocation
   // XXX: use memarea?
   return tor_malloc(len);
 }
@@ -126,6 +130,9 @@ tor_brotli_compress_new(int compress,
 
     result->u.encoder_state = encoder_state;
 
+    atomic_counter_add(&total_brotli_allocation,
+        tor_brotli_compress_state_size(result));
+
     return result;
 #endif
   } else {
@@ -142,6 +149,9 @@ tor_brotli_compress_new(int compress,
     }
 
     result->u.decoder_state = decoder_state;
+
+    atomic_counter_add(&total_brotli_allocation,
+        tor_brotli_compress_state_size(result));
 
     return result;
 #endif
@@ -223,6 +233,11 @@ tor_brotli_compress_process(tor_brotli_compress_state_t *state,
 void
 tor_brotli_compress_free_(tor_brotli_compress_state_t *state)
 {
+  tor_assert(state);
+
+  atomic_counter_sub(&total_brotli_allocation,
+      tor_brotli_compress_state_size(state));
+
 #ifdef HAVE_LIBBROTLIENC
   if (state->u.encoder_state)
     BrotliEncoderDestroyInstance(state->u.encoder_state);
@@ -238,19 +253,25 @@ tor_brotli_compress_free_(tor_brotli_compress_state_t *state)
 size_t
 tor_brotli_compress_state_size(const tor_brotli_compress_state_t *state)
 {
-  (void)state;
+  tor_assert(state);
 
-  return 0;
+  size_t allocated = sizeof(state);
+
+  // XXX: this does not include size of encoder/decoder instance and
+  // it's internal buffers.
+
+  return allocated;
 }
 
 size_t
 tor_brotli_get_total_allocation(void)
 {
-  return 0;
+  return atomic_counter_get(&total_brotli_allocation);
 }
 
 void
 tor_brotli_init(void)
 {
+  atomic_counter_init(&total_brotli_allocation);
 }
 
