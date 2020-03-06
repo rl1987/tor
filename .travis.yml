@@ -93,6 +93,10 @@ matrix:
     #  compiler: clang
     #  os: osx
 
+    - env: ALL_BUGS_ARE_FATAL="yes"
+    - env: ALL_BUGS_ARE_FATAL="yes" SKIP_MAKE_CHECK="yes" CHUTNEY="yes"
+    - env: ALL_BUGS_ARE_FATAL="yes" SKIP_MAKE_CHECK="yes" TEST_STEM="yes"
+
   ## Allow the build to report success (with non-required sub-builds
   ## continuing to run) if all required sub-builds have succeeded.
   fast_finish: true
@@ -115,8 +119,6 @@ matrix:
     #- env: CHUTNEY_MAKE="test-network-ipv6" CHUTNEY="yes" CHUTNEY_ALLOW_FAILURES="2" SKIP_MAKE_CHECK="yes"
     #  os: osx
     - env: ALL_BUGS_ARE_FATAL="yes"
-    - env: ALL_BUGS_ARE_FATAL="yes" SKIP_MAKE_CHECK="yes" CHUTNEY="yes"
-    - env: ALL_BUGS_ARE_FATAL="yes" SKIP_MAKE_CHECK="yes" TEST_STEM="yes"
 
 ## (Linux only) Use a recent Linux image (Ubuntu Bionic)
 dist: bionic
