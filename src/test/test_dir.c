@@ -2992,7 +2992,6 @@ static void
 test_dir_param_voting_lookup(void *arg)
 {
   (void)arg;
-  return;
   smartlist_t *lst = smartlist_new();
 
   smartlist_split_string(lst,
