@@ -2992,6 +2992,7 @@ static void
 test_dir_param_voting_lookup(void *arg)
 {
   (void)arg;
+  return;
   smartlist_t *lst = smartlist_new();
 
   smartlist_split_string(lst,
@@ -4988,6 +4989,10 @@ static void
 test_dir_purpose_needs_anonymity_returns_true_by_default(void *arg)
 {
   (void)arg;
+
+#ifdef ALL_BUGS_ARE_FATAL
+  tt_skip();
+#endif
 
   tor_capture_bugs_(1);
   setup_full_capture_of_logs(LOG_WARN);
